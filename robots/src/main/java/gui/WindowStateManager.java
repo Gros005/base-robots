@@ -22,7 +22,6 @@ public final class WindowStateManager {
     public static void save(JFrame mainFrame, JInternalFrame... internalFrames) {
         Properties p = new Properties();
 
-        // Main frame
         Rectangle b = mainFrame.getBounds();
         p.setProperty("main.x", Integer.toString(b.x));
         p.setProperty("main.y", Integer.toString(b.y));
@@ -30,7 +29,6 @@ public final class WindowStateManager {
         p.setProperty("main.h", Integer.toString(b.height));
         p.setProperty("main.extendedState", Integer.toString(mainFrame.getExtendedState()));
 
-        // Internal frames
         for (JInternalFrame f : internalFrames) {
             if (f == null) continue;
             String key = internalKey(f);
@@ -45,7 +43,6 @@ public final class WindowStateManager {
                 p.setProperty(key + ".icon", Boolean.toString(f.isIcon()));
                 p.setProperty(key + ".max", Boolean.toString(f.isMaximum()));
             } catch (Exception ignored) {
-                // ignore property if frame doesn't support it properly
             }
         }
 
@@ -56,7 +53,6 @@ public final class WindowStateManager {
                 p.store(os, "Robots window state");
             }
         } catch (IOException ignored) {
-            // do not crash application on config save problems
         }
     }
 
@@ -71,7 +67,6 @@ public final class WindowStateManager {
             return;
         }
 
-        // Main frame bounds
         Integer x = intOrNull(p.getProperty("main.x"));
         Integer y = intOrNull(p.getProperty("main.y"));
         Integer w = intOrNull(p.getProperty("main.w"));
@@ -86,7 +81,6 @@ public final class WindowStateManager {
             mainFrame.setExtendedState(state);
         }
 
-        // Internal frames
         for (JInternalFrame f : internalFrames) {
             if (f == null) continue;
             String key = internalKey(f);
@@ -112,7 +106,6 @@ public final class WindowStateManager {
     }
 
     private static String internalKey(JInternalFrame f) {
-        // stable key: prefer name, else class simple name
         String n = f.getName();
         if (n != null && !n.isBlank()) return "if." + n;
         return "if." + f.getClass().getSimpleName();
