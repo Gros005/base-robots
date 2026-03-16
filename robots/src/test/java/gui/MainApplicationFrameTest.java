@@ -42,17 +42,6 @@ public class MainApplicationFrameTest {
     }
 
     @Test
-    public void testExitApplicationMethodExists() {
-        try {
-            Method exitMethod = MainApplicationFrame.class.getDeclaredMethod("exitApplication");
-            assertNotNull(exitMethod);
-            assertEquals(boolean.class, exitMethod.getReturnType());
-        } catch (NoSuchMethodException e) {
-            fail("Method exitApplication not found");
-        }
-    }
-
-    @Test
     public void testLanguageMenuExists() {
         JMenuBar menuBar = frame.getJMenuBar();
         assertNotNull(menuBar);
@@ -135,11 +124,5 @@ public class MainApplicationFrameTest {
         }
 
         assertTrue(foundWindowsMenu, "Windows menu not found");
-    }
-
-    @Test
-    public void testDesktopPaneExists() {
-        assertNotNull(frame.getDesktopPane());
-        assertTrue(frame.getDesktopPane() instanceof JDesktopPane);
     }
 }

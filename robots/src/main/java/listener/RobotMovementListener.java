@@ -8,7 +8,6 @@ import model.Robot;
 public interface RobotMovementListener {
     /**
      * Вызывается, когда робот изменил свою позицию
-     * @param robot робот, который двигался
      */
     void onRobotMoved(Robot robot);
 }

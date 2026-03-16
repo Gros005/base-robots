@@ -15,6 +15,10 @@ public class RobotMovementService {
     private final Timer timer;
     private final CopyOnWriteArrayList<RobotMovementListener> listeners;
 
+    private static final int MOVEMENT_INTERVAL_MS = 10;
+    private static final double TARGET_REACHED_THRESHOLD = 0.5;  // порог цели
+    private static final int MOVEMENT_STEP_DURATION = 10;
+
     /**
      * Создает сервис движения для конкретного робота
      * @param robot робот, которым нужно управлять
@@ -30,7 +34,7 @@ public class RobotMovementService {
             public void run() {
                 updateRobotPosition();
             }
-        }, 0, 10);
+        }, 0, MOVEMENT_INTERVAL_MS);
     }
 
     /**
@@ -54,7 +58,7 @@ public class RobotMovementService {
      */
     private void updateRobotPosition() {
         // Если робот уже близко к цели - не двигаемся
-        if (robot.getDistanceToTarget() < 0.5) {
+        if (robot.getDistanceToTarget() < TARGET_REACHED_THRESHOLD) {
             return;
         }
 
@@ -69,7 +73,7 @@ public class RobotMovementService {
             angularVelocity = -robot.getMaxAngularVelocity();
         }
 
-        robot.move(velocity, angularVelocity, 10);
+        robot.move(velocity, angularVelocity, MOVEMENT_STEP_DURATION);
         notifyListeners();
     }
 

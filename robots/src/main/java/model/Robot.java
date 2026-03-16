@@ -6,6 +6,12 @@ import java.awt.Point;
  * Модель робота.
  */
 public class Robot {
+
+    private static final int DEFAULT_START_X = 100;
+    private static final int DEFAULT_START_Y = 100;
+    private static final int DEFAULT_TARGET_X = 150;
+    private static final int DEFAULT_TARGET_Y = 100;
+
     private static final double MAX_VELOCITY = 0.1;
     private static final double MAX_ANGULAR_VELOCITY = 0.001;
 
@@ -16,7 +22,8 @@ public class Robot {
 
 
     public Robot() {
-        this(100, 100, 150, 100);
+
+        this(DEFAULT_START_X, DEFAULT_START_Y, DEFAULT_TARGET_X, DEFAULT_TARGET_Y);
     }
 
     public Robot(double startX, double startY, int targetX, int targetY) {
@@ -63,10 +70,10 @@ public class Robot {
      * Сбросить робота в начальное состояние
      */
     public void reset() {
-        this.positionX = 100;
-        this.positionY = 100;
+        this.positionX = DEFAULT_START_X;
+        this.positionY = DEFAULT_START_Y;
         this.direction = 0;
-        this.target = new Point(150, 100);
+        this.target = new Point(DEFAULT_TARGET_X, DEFAULT_TARGET_Y);
     }
 
     /**

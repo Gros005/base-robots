@@ -13,13 +13,16 @@ public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private GameWindow gameWindow;
 
+    private static final int WINDOW_INSET = 50;
+    private static final int YES_BUTTON_INDEX = 0;
+    private static final int NO_BUTTON_INDEX = 1;
+
     public MainApplicationFrame() {
         // Размеры окна
-        int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(inset, inset,
-                screenSize.width - inset * 2,
-                screenSize.height - inset * 2);
+        setBounds(WINDOW_INSET, WINDOW_INSET,
+                screenSize.width - WINDOW_INSET * 2,
+                screenSize.height - WINDOW_INSET * 2);
 
         setContentPane(desktopPane);
         createWindows();
@@ -86,10 +89,10 @@ public class MainApplicationFrame extends JFrame {
                 JOptionPane.QUESTION_MESSAGE,
                 null,
                 buttons,
-                buttons[1]
+                buttons[NO_BUTTON_INDEX]
         );
 
-        if (result == 0) {
+        if (result == YES_BUTTON_INDEX) {
             // Очищаем ресурсы перед выходом
             if (gameWindow != null && gameWindow.getVisualizer() != null) {
                 gameWindow.getVisualizer().shutdown();

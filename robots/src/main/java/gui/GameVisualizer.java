@@ -18,6 +18,13 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
     private final Robot robot;
     private final RobotMovementService movementService;
 
+    private static final int REDRAW_DELAY_MS = 50;  // 20 кадров в секунду
+    private static final int ROBOT_WIDTH = 30;
+    private static final int ROBOT_HEIGHT = 10;
+    private static final int ROBOT_EYE_OFFSET = 10;
+    private static final int ROBOT_EYE_SIZE = 5;
+    private static final int TARGET_SIZE = 5;
+
     /**
      * @param robot робот, которого нужно рисовать
      * @param movementService сервис, управляющий движением
@@ -32,7 +39,7 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         setupMouseListener();
 
         // Таймер для перерисовки
-        Timer redrawTimer = new Timer(50, e -> repaint());
+        Timer redrawTimer = new Timer(REDRAW_DELAY_MS, e -> repaint());
         redrawTimer.start();
     }
 
@@ -91,19 +98,21 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         AffineTransform transform = AffineTransform.getRotateInstance(direction, x, y);
         g.setTransform(transform);
 
-        // Рисуем корпус
+        // Рисуем корпус робота
         g.setColor(Color.MAGENTA);
-        fillOval(g, x, y, 30, 10);
+        fillOval(g, x, y, ROBOT_WIDTH, ROBOT_HEIGHT);
 
+        // Рисуем контур корпуса
         g.setColor(Color.BLACK);
-        drawOval(g, x, y, 30, 10);
+        drawOval(g, x, y, ROBOT_WIDTH, ROBOT_HEIGHT);
 
-        // Рисуем "глаз" робота (направление)
+        // Рисуем "глаз" робота
         g.setColor(Color.WHITE);
-        fillOval(g, x + 10, y, 5, 5);
+        fillOval(g, x + ROBOT_EYE_OFFSET, y, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
 
+        // Рисуем контур глаза
         g.setColor(Color.BLACK);
-        drawOval(g, x + 10, y, 5, 5);
+        drawOval(g, x + ROBOT_EYE_OFFSET, y, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
 
         // Восстанавливаем трансформацию
         g.setTransform(oldTransform);
@@ -113,10 +122,10 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         Point target = robot.getTarget();
 
         g.setColor(Color.GREEN);
-        fillOval(g, target.x, target.y, 5, 5);
+        fillOval(g, target.x, target.y, TARGET_SIZE, TARGET_SIZE);
 
         g.setColor(Color.BLACK);
-        drawOval(g, target.x, target.y, 5, 5);
+        drawOval(g, target.x, target.y, TARGET_SIZE, TARGET_SIZE);
     }
 
     private void fillOval(Graphics g, int x, int y, int w, int h) {

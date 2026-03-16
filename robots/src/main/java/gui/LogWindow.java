@@ -15,6 +15,8 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
 {
     private final LogWindowSource m_logSource;
     private final TextArea m_logContent;
+    private static final int LOG_WINDOW_WIDTH = 200;
+    private static final int LOG_WINDOW_HEIGHT = 500;
 
     public LogWindow(LogWindowSource logSource) 
     {
@@ -22,7 +24,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
         m_logSource = logSource;
         m_logSource.registerListener(this);
         m_logContent = new TextArea("");
-        m_logContent.setSize(200, 500);
+        m_logContent.setSize(LOG_WINDOW_WIDTH, LOG_WINDOW_HEIGHT);
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_logContent, BorderLayout.CENTER);

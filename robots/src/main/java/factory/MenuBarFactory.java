@@ -53,7 +53,7 @@ public class MenuBarFactory {
 
         JMenuItem newItem = new JMenuItem(Language.get("menu.file.new"));
         newItem.setMnemonic(KeyEvent.VK_N);
-        newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK));
+        newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_DOWN_MASK));
         newItem.addActionListener(this::onNew);
         menu.add(newItem);
 
@@ -61,7 +61,7 @@ public class MenuBarFactory {
 
         JMenuItem quitItem = new JMenuItem(Language.get("menu.file.quit"));
         quitItem.setMnemonic(KeyEvent.VK_Q);
-        quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_MASK));
+        quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_DOWN_MASK));
         quitItem.addActionListener(e -> {
             parentFrame.dispatchEvent(new java.awt.event.WindowEvent(
                     parentFrame, java.awt.event.WindowEvent.WINDOW_CLOSING

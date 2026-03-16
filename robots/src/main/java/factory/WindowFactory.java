@@ -12,27 +12,48 @@ import service.RobotMovementService;
  */
 public class WindowFactory {
 
+    private static final int DEFAULT_ROBOT_X = 100;
+    private static final int DEFAULT_ROBOT_Y = 100;
+    private static final int DEFAULT_TARGET_X = 150;
+    private static final int DEFAULT_TARGET_Y = 100;
+    private static final int WINDOW_OFFSET = 30;
+    private static final int WINDOW_WIDTH = 400;
+    private static final int WINDOW_HEIGHT = 400;
+    private static final int LOG_WINDOW_X = 10;
+    private static final int LOG_WINDOW_Y = 10;
+    private static final int LOG_WINDOW_WIDTH = 300;
+    private static final int LOG_WINDOW_HEIGHT = 800;
+
     private static int windowCounter = 1;
 
     /**
      * Создает первое окно
      */
     public static GameWindow createGameWindow() {
-        return createGameWindow(100, 100, 150, 100);
-    }
+        return createGameWindow(
+                DEFAULT_ROBOT_X,
+                DEFAULT_ROBOT_Y,
+                DEFAULT_TARGET_X,
+                DEFAULT_TARGET_Y
+        );    }
 
     /**
      * Создает новое окно с роботом в стартовой позиции
      */
     public static GameWindow createNewGameWindow() {
         // Смещаем каждое новое окно на 30 пикселей вправо и вниз
-        int offset = windowCounter * 30;
+        int offset = windowCounter * WINDOW_OFFSET;
         windowCounter++;
 
-        GameWindow window = createGameWindow(100 + offset, 100 + offset, 150 + offset, 100 + offset);
-
+        GameWindow window = createGameWindow(
+                DEFAULT_ROBOT_X + WINDOW_OFFSET,
+                DEFAULT_ROBOT_Y + WINDOW_OFFSET,
+                DEFAULT_TARGET_X + WINDOW_OFFSET,
+                DEFAULT_TARGET_Y + WINDOW_OFFSET
+        );
         window.setTitle("Игровое поле " + windowCounter);
-        window.setLocation(offset, offset);
+        window.setLocation(WINDOW_OFFSET, WINDOW_OFFSET);
+        window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         return window;
     }
@@ -49,7 +70,7 @@ public class WindowFactory {
         GameVisualizer visualizer = new GameVisualizer(robot, movementService);
 
         GameWindow gameWindow = new GameWindow(visualizer);
-        gameWindow.setSize(400, 400);
+        gameWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         return gameWindow;
     }
@@ -59,8 +80,8 @@ public class WindowFactory {
      */
     public static LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10, 10);
-        logWindow.setSize(300, 800);
+        logWindow.setLocation(LOG_WINDOW_X, LOG_WINDOW_Y);
+    logWindow.setSize(LOG_WINDOW_WIDTH, LOG_WINDOW_HEIGHT);
         logWindow.pack();
 
         Logger.debug("Протокол работает");
