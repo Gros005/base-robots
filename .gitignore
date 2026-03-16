@@ -1,13 +1,27 @@
-/.metadata
-/robots/.settings
-/robots/bin
-eclipse.bat
+.robots/
 
-.idea
-*.jar
+.idea/
+*.iml
+*.iws
+out/
 
-# Ignore Gradle project-specific cache directory
-.gradle
+.gradle/
+build/
+gradle-app.setting
 
-# Ignore Gradle build output directory
-build
+.metadata
+.settings/
+.bin/
+.project
+.classpath
+*.tmp
+*.bak
+*.swp
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.log
+logs/
+temp/

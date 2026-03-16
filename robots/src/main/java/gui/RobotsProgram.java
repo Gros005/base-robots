@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class RobotsProgram
 {
-    public static void main(String[] args) {
+    public  void main(String[] args) {
       try {
         UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 
@@ -27,18 +27,18 @@ public class RobotsProgram
       });
     }
 
-    public static final class WindowStateManager {
-        private static final String DIR_NAME = ".robots";
-        private static final String FILE_NAME = "window-state.properties";
+    public  final class WindowStateManager {
+        private  final String DIR_NAME = ".robots";
+        private  final String FILE_NAME = "window-state.properties";
 
         private WindowStateManager() {}
 
-        public static Path getConfigPath() {
+        public  Path getConfigPath() {
             String home = System.getProperty("user.home");
             return Path.of(home, DIR_NAME, FILE_NAME);
         }
 
-        public static void save(JFrame mainFrame, JInternalFrame... internalFrames) {
+        public  void save(JFrame mainFrame, JInternalFrame... internalFrames) {
             Properties p = new Properties();
 
             Rectangle b = mainFrame.getBounds();
@@ -75,7 +75,7 @@ public class RobotsProgram
             }
         }
 
-        public static void restore(JFrame mainFrame, JInternalFrame... internalFrames) {
+        public  void restore(JFrame mainFrame, JInternalFrame... internalFrames) {
             Path cfg = getConfigPath();
             if (!Files.exists(cfg)) return;
 
@@ -124,19 +124,19 @@ public class RobotsProgram
             }
         }
 
-        private static String internalKey(JInternalFrame f) {
+        private  String internalKey(JInternalFrame f) {
             String n = f.getName();
             if (n != null && !n.isBlank()) return "if." + n;
             return "if." + f.getClass().getSimpleName();
         }
 
-        private static Integer intOrNull(String s) {
+        private  Integer intOrNull(String s) {
             if (s == null) return null;
             try { return Integer.parseInt(s.trim()); }
             catch (Exception e) { return null; }
         }
 
-        private static Boolean boolOrNull(String s) {
+        private  Boolean boolOrNull(String s) {
             if (s == null) return null;
             return Boolean.parseBoolean(s.trim());
         }
