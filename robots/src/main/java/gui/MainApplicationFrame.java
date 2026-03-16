@@ -1,50 +1,35 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 import log.Logger;
 
-public class MainApplicationFrame extends JFrame
-{
+public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
+    // Создаем экземпляр менеджера
+    private final WindowStateManager windowStateManager = new WindowStateManager();
 
-
-    private final LogWindow logWindow;
-    private final GameWindow gameWindow;
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
 
     public MainApplicationFrame() {
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(inset, inset,
-                screenSize.width  - inset*2,
-                screenSize.height - inset*2);
+        setBounds(inset, inset, screenSize.width - inset * 2, screenSize.height - inset * 2);
 
         setContentPane(desktopPane);
 
         logWindow = createLogWindow();
-        logWindow.setName("logWindow"); // stable key for config
+        logWindow.setName("logWindow");
         addWindow(logWindow);
 
         gameWindow = new GameWindow();
-        gameWindow.setName("gameWindow"); // stable key for config
-        gameWindow.setSize(400,  400);
+        gameWindow.setName("gameWindow");
         addWindow(gameWindow);
 
-        WindowStateManager.restore(this, logWindow, gameWindow);
+        // ВЫЗОВ ЧЕРЕЗ ЭКЗЕМПЛЯР (исправляет ошибку static)
+        windowStateManager.restore(this, logWindow, gameWindow);
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -52,83 +37,43 @@ public class MainApplicationFrame extends JFrame
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                WindowStateManager.save(MainApplicationFrame.this, logWindow, gameWindow);
+                // ВЫЗОВ ЧЕРЕЗ ЭКЗЕМПЛЯР
+                windowStateManager.save(MainApplicationFrame.this, logWindow, gameWindow);
             }
         });
     }
 
-    protected LogWindow createLogWindow()
-    {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10,10);
-        logWindow.setSize(300, 800);
-        setMinimumSize(logWindow.getSize());
-        logWindow.pack();
-        Logger.debug("Протокол работает");
-        return logWindow;
+    protected LogWindow createLogWindow() {
+        LogWindow lw = new LogWindow(Logger.getDefaultLogSource());
+        lw.setSize(300, 600);
+        lw.pack();
+        return lw;
     }
 
-    protected void addWindow(JInternalFrame frame)
-    {
+    protected void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
     }
 
-    private JMenuBar generateMenuBar()
-    {
+    private JMenuBar generateMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
-                "Управление режимом отображения приложения");
-
-        {
-            JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
-            systemLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                this.invalidate();
-            });
-            lookAndFeelMenu.add(systemLookAndFeel);
-        }
-
-        {
-            JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
-            crossplatformLookAndFeel.addActionListener((event) -> {
-                setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-                this.invalidate();
-            });
-            lookAndFeelMenu.add(crossplatformLookAndFeel);
-        }
-
-        JMenu testMenu = new JMenu("Тесты");
-        testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext().setAccessibleDescription(
-                "Тестовые команды");
-
-        {
-            JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
-            addLogMessageItem.addActionListener((event) -> {
-                Logger.debug("Новая строка");
-            });
-            testMenu.add(addLogMessageItem);
-        }
-
-        menuBar.add(lookAndFeelMenu);
-        menuBar.add(testMenu);
+        JMenu visualMenu = new JMenu("Режим отображения");
+        addMenuItem(visualMenu, "Системная схема", UIManager.getSystemLookAndFeelClassName());
+        addMenuItem(visualMenu, "Универсальная схема", UIManager.getCrossPlatformLookAndFeelClassName());
+        menuBar.add(visualMenu);
         return menuBar;
     }
 
-    private void setLookAndFeel(String className)
-    {
-        try
-        {
-            UIManager.setLookAndFeel(className);
-            SwingUtilities.updateComponentTreeUI(this);
-        }
-        catch (ClassNotFoundException | InstantiationException
-               | IllegalAccessException | UnsupportedLookAndFeelException e)
-        {
-        }
+    private void addMenuItem(JMenu menu, String label, String className) {
+        JMenuItem item = new JMenuItem(label);
+        item.addActionListener(e -> {
+            try {
+                UIManager.setLookAndFeel(className);
+                SwingUtilities.updateComponentTreeUI(this);
+            } catch (Exception ex) {
+                Logger.error(ex.getMessage());
+            }
+        });
+        menu.add(item);
     }
 }
