@@ -1,6 +1,9 @@
 package log;
 
+/**
+ * Интерфейс для получения уведомлений об изменениях логов робота.
+ */
 public interface LogChangeListener
 {
-    public void onLogChanged(); 
+    void onLogChanged();
 }

@@ -1,5 +1,7 @@
 package log;
 
+import model.LogLevel;
+
 public final class Logger
 {
     private static final LogWindowSource defaultLogSource;

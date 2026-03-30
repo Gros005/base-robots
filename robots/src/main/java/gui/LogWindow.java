@@ -8,13 +8,15 @@ import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 
 import log.LogChangeListener;
-import log.LogEntry;
+import model.LogEntry;
 import log.LogWindowSource;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener
 {
-    private LogWindowSource m_logSource;
-    private TextArea m_logContent;
+    private final LogWindowSource m_logSource;
+    private final TextArea m_logContent;
+    private static final int LOG_WINDOW_WIDTH = 200;
+    private static final int LOG_WINDOW_HEIGHT = 500;
 
     public LogWindow(LogWindowSource logSource) 
     {
@@ -22,7 +24,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
         m_logSource = logSource;
         m_logSource.registerListener(this);
         m_logContent = new TextArea("");
-        m_logContent.setSize(200, 500);
+        m_logContent.setSize(LOG_WINDOW_WIDTH, LOG_WINDOW_HEIGHT);
         
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_logContent, BorderLayout.CENTER);
@@ -46,5 +48,10 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
     public void onLogChanged()
     {
         EventQueue.invokeLater(this::updateLogContent);
+    }
+    @Override
+    public void dispose() {
+        m_logSource.unregisterListener(this);
+        super.dispose();
     }
 }
