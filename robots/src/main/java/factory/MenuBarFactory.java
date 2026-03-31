@@ -1,5 +1,6 @@
 package factory;
 
+import config.RobotColor;
 import gui.GameWindow;
 import gui.Language;
 import gui.MainApplicationFrame;
@@ -37,6 +38,9 @@ public class MenuBarFactory {
 
         menuBar.add(createFileMenu());
         menuBar.add(createLanguageMenu());
+        menuBar.add(createRobotColorMenu());
+        menuBar.add(createTargetColorMenu());
+        menuBar.add(createTrailColorMenu());
         menuBar.add(createViewMenu());
         menuBar.add(createTestsMenu());
         menuBar.add(createWindowsMenu());
@@ -155,7 +159,6 @@ public class MenuBarFactory {
      * Обновляет список окон в меню
      */
     private void updateWindowsMenu(JMenu windowsMenu) {
-        // Очищаем старые пункты (кроме первых двух)
         while (windowsMenu.getItemCount() > 2) {
             windowsMenu.remove(2);
         }
@@ -193,10 +196,8 @@ public class MenuBarFactory {
      * Обработчик пункта меню New
      */
     private void onNew(ActionEvent e) {
-        // Создаем новое окно через фабрику
         GameWindow newWindow = WindowFactory.createNewGameWindow();
 
-        // Добавляем окно в главное окно
         parentFrame.addWindow(newWindow);
         allGameWindows.add(newWindow);
 
@@ -227,7 +228,175 @@ public class MenuBarFactory {
             UIManager.setLookAndFeel(className);
             SwingUtilities.updateComponentTreeUI(parentFrame);
         } catch (Exception e) {
-            // Игнорируем ошибки смены темы, тк они не критичны для работы программы
+        }
+    }
+    /**
+     * Создает меню выбора цвета робота
+     */
+    private JMenu createRobotColorMenu() {
+        JMenu menu = new JMenu(Language.get("menu.color"));
+        menu.setMnemonic(KeyEvent.VK_C);
+
+        JMenuItem redItem = new JMenuItem(Language.get("menu.color.red"));
+        redItem.addActionListener(e -> {
+            RobotColor.setRobotColor(RobotColor.ColorPreset.RED);
+            updateRobotColors();
+        });
+        menu.add(redItem);
+
+        JMenuItem blueItem = new JMenuItem(Language.get("menu.color.blue"));
+        blueItem.addActionListener(e -> {
+            RobotColor.setRobotColor(RobotColor.ColorPreset.BLUE);
+            updateRobotColors();
+        });
+        menu.add(blueItem);
+
+        JMenuItem greenItem = new JMenuItem(Language.get("menu.color.green"));
+        greenItem.addActionListener(e -> {
+            RobotColor.setRobotColor(RobotColor.ColorPreset.GREEN);
+            updateRobotColors();
+        });
+        menu.add(greenItem);
+
+        JMenuItem yellowItem = new JMenuItem(Language.get("menu.color.yellow"));
+        yellowItem.addActionListener(e -> {
+            RobotColor.setRobotColor(RobotColor.ColorPreset.YELLOW);
+            updateRobotColors();
+        });
+        menu.add(yellowItem);
+
+        JMenuItem purpleItem = new JMenuItem(Language.get("menu.color.purple"));
+        purpleItem.addActionListener(e -> {
+            RobotColor.setRobotColor(RobotColor.ColorPreset.PURPLE);
+            updateRobotColors();
+        });
+        menu.add(purpleItem);
+
+        return menu;
+    }
+
+    /**
+     * Обновляет цвет всех роботов во всех окнах
+     */
+    private void updateRobotColors() {
+        for (GameWindow window : allGameWindows) {
+            if (window.getVisualizer() != null) {
+                window.getVisualizer().repaint();
+            }
+        }
+    }
+
+    /**
+     * Создает меню выбора цвета цели
+     */
+    private JMenu createTargetColorMenu() {
+        JMenu menu = new JMenu(Language.get("menu.targetColor"));
+        menu.setMnemonic(KeyEvent.VK_T);
+
+        addColorItems(menu, true, false);
+
+        return menu;
+    }
+
+    /**
+     * Создает меню выбора цвета следа
+     */
+    private JMenu createTrailColorMenu() {
+        JMenu menu = new JMenu(Language.get("menu.trailColor"));
+        menu.setMnemonic(KeyEvent.VK_R);
+
+        addColorItems(menu, false, true);
+
+        return menu;
+    }
+
+    /**
+     * Добавляет пункты выбора цвета
+     */
+    private void addColorItems(JMenu menu, boolean isTarget, boolean isTrail) {
+        JMenuItem redItem = new JMenuItem(Language.get("menu.color.red"));
+        redItem.addActionListener(e -> {
+            if (isTarget) {
+                RobotColor.setTargetColor(RobotColor.ColorPreset.RED);
+            } else if (isTrail) {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.RED);
+            } else {
+                RobotColor.setRobotColor(RobotColor.ColorPreset.RED);
+            }
+            updateColors();
+        });
+        menu.add(redItem);
+
+        JMenuItem blueItem = new JMenuItem(Language.get("menu.color.blue"));
+        blueItem.addActionListener(e -> {
+            if (isTarget) {
+                RobotColor.setTargetColor(RobotColor.ColorPreset.BLUE);
+            } else if (isTrail) {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.BLUE);
+            } else {
+                RobotColor.setRobotColor(RobotColor.ColorPreset.BLUE);
+            }
+            updateColors();
+        });
+        menu.add(blueItem);
+
+        JMenuItem greenItem = new JMenuItem(Language.get("menu.color.green"));
+        greenItem.addActionListener(e -> {
+            if (isTarget) {
+                RobotColor.setTargetColor(RobotColor.ColorPreset.GREEN);
+            } else if (isTrail) {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.GREEN);
+            } else {
+                RobotColor.setRobotColor(RobotColor.ColorPreset.GREEN);
+            }
+            updateColors();
+        });
+        menu.add(greenItem);
+
+        JMenuItem yellowItem = new JMenuItem(Language.get("menu.color.yellow"));
+        yellowItem.addActionListener(e -> {
+            if (isTarget) {
+                RobotColor.setTargetColor(RobotColor.ColorPreset.YELLOW);
+            } else if (isTrail) {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.YELLOW);
+            } else {
+                RobotColor.setRobotColor(RobotColor.ColorPreset.YELLOW);
+            }
+            updateColors();
+        });
+        menu.add(yellowItem);
+
+        JMenuItem purpleItem = new JMenuItem(Language.get("menu.color.purple"));
+        purpleItem.addActionListener(e -> {
+            if (isTarget) {
+                RobotColor.setTargetColor(RobotColor.ColorPreset.PURPLE);
+            } else if (isTrail) {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.PURPLE);
+            } else {
+                RobotColor.setRobotColor(RobotColor.ColorPreset.PURPLE);
+            }
+            updateColors();
+        });
+        menu.add(purpleItem);
+
+        if (isTrail) {
+            JMenuItem grayItem = new JMenuItem(Language.get("menu.trailColor.gray"));
+            grayItem.addActionListener(e -> {
+                RobotColor.setTrailColor(RobotColor.ColorPreset.GRAY);
+                updateColors();
+            });
+            menu.add(grayItem);
+        }
+    }
+
+    /**
+     * Обновляет цвета во всех окнах
+     */
+    private void updateColors() {
+        for (GameWindow window : allGameWindows) {
+            if (window != null && window.getVisualizer() != null) {
+                window.getVisualizer().repaint();
+            }
         }
     }
 }

@@ -1,7 +1,11 @@
 package gui;
 
+import config.RobotColor;
 import factory.MenuBarFactory;
 import factory.WindowFactory;
+import config.WindowState;
+import service.RobotMovementService;
+import model.Robot;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,21 +30,62 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
         createWindows();
+        restoreWindowsState();
+        RobotColor.loadColors();
         setupMenu();
         setupWindowClosing();
+    }
+
+    /**
+     * Восстанавливает сохраненное состояние окон
+     */
+    private void restoreWindowsState() {
+        WindowState.restoreWindowState("main", this);
+
+        if (gameWindow != null) {
+            WindowState.restoreWindowState("gameWindow", gameWindow);
+        }
+
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof LogWindow) {
+                WindowState.restoreWindowState("logWindow", frame);
+            }
+        }
+    }
+
+    /**
+     * Сохраняет состояние всех окон
+     */
+    private void saveWindowsState() {
+        WindowState.saveWindowState("main", this);
+
+        if (gameWindow != null) {
+            WindowState.saveWindowState("gameWindow", gameWindow);
+        }
+
+        for (JInternalFrame frame : desktopPane.getAllFrames()) {
+            if (frame instanceof LogWindow) {
+                WindowState.saveWindowState("logWindow", frame);
+            }
+        }
     }
 
     /**
      * Создает внутренние окна приложения
      */
     private void createWindows() {
-        // Создаем игровое окно
         gameWindow = WindowFactory.createGameWindow();
         addWindow(gameWindow);
 
-        // Создаем окно логов
         LogWindow logWindow = WindowFactory.createLogWindow();
         addWindow(logWindow);
+
+        model.Robot robot = gameWindow.getVisualizer().getRobot();
+        CoordinateWindow coordinateWindow = WindowFactory.createCoordinateWindow(robot);
+        addWindow(coordinateWindow);
+
+        RobotMovementService movementService = gameWindow.getVisualizer().getMovementService();
+        movementService.addListener(coordinateWindow);
     }
 
     /**
@@ -93,7 +138,8 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == YES_BUTTON_INDEX) {
-            // Очищаем ресурсы перед выходом
+            saveWindowsState();
+
             if (gameWindow != null && gameWindow.getVisualizer() != null) {
                 gameWindow.getVisualizer().shutdown();
             }
