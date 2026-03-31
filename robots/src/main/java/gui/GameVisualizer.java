@@ -1,5 +1,6 @@
 package gui;
 
+import config.ColorSettings;
 import model.Robot;
 import service.RobotMovementService;
 import listener.RobotMovementListener;
@@ -7,28 +8,29 @@ import log.Logger;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Визуализатор игрового поля(отрисовка).
+ * Визуализатор игрового поля
  */
 public class GameVisualizer extends JPanel implements RobotMovementListener {
     private final Robot robot;
     private final RobotMovementService movementService;
+    private final List<Point> trail = new ArrayList<>();
 
-    private static final int REDRAW_DELAY_MS = 50;  // 20 кадров в секунду
+    private static final int REDRAW_DELAY_MS = 50;
     private static final int ROBOT_WIDTH = 30;
     private static final int ROBOT_HEIGHT = 10;
     private static final int ROBOT_EYE_OFFSET = 10;
     private static final int ROBOT_EYE_SIZE = 5;
     private static final int TARGET_SIZE = 5;
 
-    /**
-     * @param robot робот, которого нужно рисовать
-     * @param movementService сервис, управляющий движением
-     */
     public GameVisualizer(Robot robot, RobotMovementService movementService) {
         this.robot = robot;
         this.movementService = movementService;
@@ -38,42 +40,68 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         setDoubleBuffered(true);
         setupMouseListener();
 
-        // Таймер для перерисовки
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                robot.updateBounds(getWidth(), getHeight());
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                // При первом показе — принудительно обновляем границы
+                robot.updateBounds(getWidth(), getHeight());
+            }
+        });
+
         Timer redrawTimer = new Timer(REDRAW_DELAY_MS, e -> repaint());
         redrawTimer.start();
     }
 
-    /**
-     * Настройка обработчика кликов
-     */
     private void setupMouseListener() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Передаем цель в сервис движения
                 movementService.setTarget(e.getPoint());
                 repaint();
             }
         });
     }
 
-    /**
-     * Сброс робота в начальное положение
-     */
     public void resetRobot() {
         movementService.resetRobot();
+        clearTrail();
         Logger.debug("Робот сброшен в начальную позицию");
     }
 
-    /**
-     * Остановка сервиса при закрытии
-     */
     public void shutdown() {
         movementService.shutdown();
     }
 
+    public void clearTrail() {
+        trail.clear();
+    }
+
+    public Robot getRobot() {
+        return robot;
+    }
+
+    public RobotMovementService getMovementService() {
+        return movementService;
+    }
+
+    private void setupComponentListener() {
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                robot.updateBounds(getWidth(), getHeight());
+            }
+        });
+    }
+
     @Override
     public void onRobotMoved(Robot robot) {
+        Point currentPos = new Point((int) robot.getPositionX(), (int) robot.getPositionY());
+        trail.add(currentPos);
         repaint();
     }
 
@@ -82,6 +110,7 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
+        drawTrail(g2d);
         drawRobot(g2d);
         drawTarget(g2d);
     }
@@ -91,48 +120,66 @@ public class GameVisualizer extends JPanel implements RobotMovementListener {
         int y = (int) Math.round(robot.getPositionY());
         double direction = robot.getDirection();
 
-        // Сохраняем текущую трансформацию
-        AffineTransform oldTransform = g.getTransform();
+        AffineTransform old = g.getTransform();
+        g.translate(x, y);
+        g.rotate(direction);
 
-        // Поворачиваем контекст для отрисовки робота
-        AffineTransform transform = AffineTransform.getRotateInstance(direction, x, y);
-        g.setTransform(transform);
+        g.setColor(ColorSettings.getInstance().getRobotColor());
+        g.fillOval(-ROBOT_WIDTH/2, -ROBOT_HEIGHT/2, ROBOT_WIDTH, ROBOT_HEIGHT);
 
-        // Рисуем корпус робота
-        g.setColor(Color.MAGENTA);
-        fillOval(g, x, y, ROBOT_WIDTH, ROBOT_HEIGHT);
-
-        // Рисуем контур корпуса
         g.setColor(Color.BLACK);
-        drawOval(g, x, y, ROBOT_WIDTH, ROBOT_HEIGHT);
+        g.drawOval(-ROBOT_WIDTH/2, -ROBOT_HEIGHT/2, ROBOT_WIDTH, ROBOT_HEIGHT);
 
-        // Рисуем "глаз" робота
+        int eyeX = ROBOT_WIDTH/3;
         g.setColor(Color.WHITE);
-        fillOval(g, x + ROBOT_EYE_OFFSET, y, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
+        g.fillOval(eyeX - ROBOT_EYE_SIZE/2, -ROBOT_EYE_SIZE/2, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
 
-        // Рисуем контур глаза
         g.setColor(Color.BLACK);
-        drawOval(g, x + ROBOT_EYE_OFFSET, y, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
+        g.drawOval(eyeX - ROBOT_EYE_SIZE/2, -ROBOT_EYE_SIZE/2, ROBOT_EYE_SIZE, ROBOT_EYE_SIZE);
 
-        // Восстанавливаем трансформацию
-        g.setTransform(oldTransform);
+        g.setTransform(old);
     }
 
     private void drawTarget(Graphics2D g) {
         Point target = robot.getTarget();
 
-        g.setColor(Color.GREEN);
+        g.setColor(ColorSettings.getInstance().getTargetColor());
         fillOval(g, target.x, target.y, TARGET_SIZE, TARGET_SIZE);
 
         g.setColor(Color.BLACK);
         drawOval(g, target.x, target.y, TARGET_SIZE, TARGET_SIZE);
     }
 
+    private void drawTrail(Graphics2D g) {
+        if (trail.size() < 2) return;
+
+        g.setColor(ColorSettings.getInstance().getTrailColor());
+        g.setStroke(new BasicStroke(2));
+
+        for (int i = 0; i < trail.size() - 1; i++) {
+            Point p1 = trail.get(i);
+            Point p2 = trail.get(i + 1);
+            g.drawLine(p1.x, p1.y, p2.x, p2.y);
+        }
+    }
     private void fillOval(Graphics g, int x, int y, int w, int h) {
         g.fillOval(x - w/2, y - h/2, w, h);
     }
 
     private void drawOval(Graphics g, int x, int y, int w, int h) {
         g.drawOval(x - w/2, y - h/2, w, h);
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        updateRobotBounds();
+    }
+
+    public void updateRobotBounds() {
+        if (robot != null && getWidth() > 50 && getHeight() > 50) {
+            robot.updateBounds(getWidth(), getHeight());
+            repaint();
+        }
     }
 }

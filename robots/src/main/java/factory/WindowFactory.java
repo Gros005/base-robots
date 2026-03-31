@@ -3,6 +3,7 @@ package factory;
 import gui.GameWindow;
 import gui.LogWindow;
 import gui.GameVisualizer;
+import gui.CoordinateWindow;
 import log.Logger;
 import model.Robot;
 import service.RobotMovementService;
@@ -41,10 +42,7 @@ public class WindowFactory {
      * Создает новое окно с роботом в стартовой позиции
      */
     public static GameWindow createNewGameWindow() {
-        // Смещаем каждое новое окно на 30 пикселей вправо и вниз
-        int offset = windowCounter * WINDOW_OFFSET;
         windowCounter++;
-
         GameWindow window = createGameWindow(
                 DEFAULT_ROBOT_X + WINDOW_OFFSET,
                 DEFAULT_ROBOT_Y + WINDOW_OFFSET,
@@ -87,6 +85,16 @@ public class WindowFactory {
         Logger.debug("Протокол работает");
 
         return logWindow;
+    }
+
+    /**
+     * Создает окно с координатами робота
+     */
+    public static CoordinateWindow createCoordinateWindow(Robot robot) {
+        CoordinateWindow window = new CoordinateWindow(robot);
+        window.setSize(250, 150);
+        window.setLocation(400, 500);
+        return window;
     }
 
     /**
