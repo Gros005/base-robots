@@ -1,27 +1,12 @@
-.robots/
+/.metadata/
+/robots/.settings/
+/robots/bin/
+/eclipse.bat
 
-.idea/
+/.idea/
 *.iml
-*.iws
-out/
+/out/
 
-.gradle/
-build/
-gradle-app.setting
-
-.metadata
-.settings/
-.bin/
-.project
-.classpath
-*.tmp
-*.bak
-*.swp
-
-.DS_Store
-Thumbs.db
-desktop.ini
-
-*.log
-logs/
-temp/
+/.gradle/
+/build/
+**/build/
