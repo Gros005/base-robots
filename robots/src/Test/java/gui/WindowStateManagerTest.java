@@ -3,24 +3,35 @@ package gui;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import javax.swing.*;
+
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import java.awt.Frame;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class WindowStateManagerTest {
     private WindowStateManager manager;
     private JFrame mainFrame;
     private JInternalFrame logFrame;
     private JInternalFrame gameFrame;
+    private JDesktopPane desktopPane;
     private Path testConfigPath;
 
     @Before
     public void setUp() {
-        manager = new WindowStateManager();
+        testConfigPath = Path.of(System.getProperty("user.home"), ".robots", "window-state.properties");
+        manager = new WindowStateManager(testConfigPath);
         mainFrame = new JFrame();
+        desktopPane = new JDesktopPane();
+        mainFrame.setContentPane(desktopPane);
 
         logFrame = new JInternalFrame();
         logFrame.setName("logWindow");
@@ -28,7 +39,8 @@ public class WindowStateManagerTest {
         gameFrame = new JInternalFrame();
         gameFrame.setName("gameWindow");
 
-        testConfigPath = Path.of(System.getProperty("user.home"), ".robots", "window-state.properties");
+        desktopPane.add(logFrame);
+        desktopPane.add(gameFrame);
     }
 
     @After
@@ -59,7 +71,6 @@ public class WindowStateManagerTest {
 
     @Test
     public void testMaximizedStatePersistence() throws Exception {
-        // Имитируем развернутое окно
         logFrame.setBounds(100, 100, 200, 200);
         logFrame.setMaximum(true);
 
@@ -69,7 +80,7 @@ public class WindowStateManagerTest {
 
         manager.restore(mainFrame, logFrame);
 
-        assertTrue("Окно должно восстановить состояние 'Maximized'", logFrame.isMaximum());
+        assertTrue(logFrame.isMaximum());
     }
 
     @Test
@@ -81,18 +92,56 @@ public class WindowStateManagerTest {
         logFrame.setIcon(false);
         manager.restore(mainFrame, logFrame);
 
-        assertTrue("Окно должно остаться свернутым", logFrame.isIcon());
+        assertTrue(logFrame.isIcon());
     }
 
     @Test
-    public void testMainFrameExtendedState() {
-        mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+    public void testMainFrameExtendedStateDoesNotRestoreIconifiedFlag() throws IOException {
+        mainFrame.setExtendedState(Frame.MAXIMIZED_BOTH | Frame.ICONIFIED);
 
         manager.save(mainFrame, logFrame);
 
-        mainFrame.setExtendedState(JFrame.NORMAL);
+        Properties properties = new Properties();
+        properties.load(Files.newInputStream(testConfigPath));
+
+        assertEquals(String.valueOf(Frame.MAXIMIZED_BOTH), properties.getProperty("main.extendedState"));
+
+        mainFrame.setExtendedState(Frame.NORMAL);
         manager.restore(mainFrame, logFrame);
 
-        assertEquals(JFrame.MAXIMIZED_BOTH, mainFrame.getExtendedState());
+        assertEquals(Frame.MAXIMIZED_BOTH, mainFrame.getExtendedState());
+        assertFalse((mainFrame.getExtendedState() & Frame.ICONIFIED) != 0);
+    }
+
+    @Test
+    public void testSaveKeepsAllNamedWindowsSeparately() throws IOException {
+        JInternalFrame secondGameFrame = new JInternalFrame();
+        secondGameFrame.setName("gameWindow-2");
+        secondGameFrame.setBounds(700, 150, 420, 420);
+        desktopPane.add(secondGameFrame);
+
+        manager.save(mainFrame, logFrame, gameFrame, secondGameFrame);
+
+        Properties properties = new Properties();
+        properties.load(Files.newInputStream(testConfigPath));
+
+        assertEquals("700", properties.getProperty("internal.gameWindow-2.x"));
+        assertEquals("420", properties.getProperty("internal.gameWindow-2.width"));
+    }
+
+    @Test
+    public void testRestorePreservesSavedZOrder() {
+        desktopPane.setComponentZOrder(logFrame, 0);
+        desktopPane.setComponentZOrder(gameFrame, 1);
+
+        manager.save(mainFrame, logFrame, gameFrame);
+
+        desktopPane.setComponentZOrder(logFrame, 1);
+        desktopPane.setComponentZOrder(gameFrame, 0);
+
+        manager.restore(mainFrame, logFrame, gameFrame);
+
+        assertEquals(0, desktopPane.getComponentZOrder(logFrame));
+        assertEquals(1, desktopPane.getComponentZOrder(gameFrame));
     }
 }

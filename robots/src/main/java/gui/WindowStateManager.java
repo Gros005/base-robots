@@ -2,13 +2,19 @@ package gui;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -53,7 +59,7 @@ public final class WindowStateManager
         Properties properties = new Properties();
         storeComponentBounds(properties, MAIN_WINDOW_PREFIX, mainFrame);
         properties.setProperty(MAIN_WINDOW_PREFIX + EXTENDED_STATE_SUFFIX,
-            Integer.toString(mainFrame.getExtendedState()));
+            Integer.toString(mainFrame.getExtendedState() & ~Frame.ICONIFIED));
 
         for (JInternalFrame frame : internalFrames)
         {
@@ -90,9 +96,10 @@ public final class WindowStateManager
 
         Integer extendedState = readInteger(properties, MAIN_WINDOW_PREFIX + EXTENDED_STATE_SUFFIX);
         if (extendedState != null) {
-            mainFrame.setExtendedState(extendedState);
+            mainFrame.setExtendedState(extendedState & ~Frame.ICONIFIED);
         }
 
+        JInternalFrame selectedFrame = null;
         for (JInternalFrame frame : internalFrames)
         {
             if (frame == null) {
@@ -103,7 +110,26 @@ public final class WindowStateManager
             restoreComponentBounds(properties, prefix, frame,
                 MIN_INTERNAL_WINDOW_WIDTH, MIN_INTERNAL_WINDOW_HEIGHT);
             restoreInternalFrameState(properties, prefix, frame);
+            if (Boolean.TRUE.equals(readBoolean(properties, prefix + SELECTED_SUFFIX))) {
+                selectedFrame = frame;
+            }
         }
+
+        restoreInternalFrameOrder(properties, internalFrames);
+        restoreSelectedFrame(selectedFrame);
+    }
+
+    public Set<String> getSavedInternalWindowNames()
+    {
+        Properties properties = loadProperties();
+        Set<String> names = new TreeSet<>();
+        for (String key : properties.stringPropertyNames()) {
+            String windowName = extractInternalWindowName(key);
+            if (windowName != null) {
+                names.add(windowName);
+            }
+        }
+        return names;
     }
 
     private void storeComponentBounds(Properties properties, String prefix, Component component)
@@ -139,13 +165,6 @@ public final class WindowStateManager
             frame.setLayer(layer);
         }
 
-        Integer zOrder = readInteger(properties, prefix + Z_ORDER_SUFFIX);
-        Container parent = frame.getParent();
-        if (parent != null && zOrder != null) {
-            int restoredOrder = Math.max(0, Math.min(zOrder, parent.getComponentCount() - 1));
-            parent.setComponentZOrder(frame, restoredOrder);
-        }
-
         Boolean maximized = readBoolean(properties, prefix + MAXIMUM_SUFFIX);
         if (Boolean.TRUE.equals(maximized)) {
             try {
@@ -161,13 +180,48 @@ public final class WindowStateManager
             } catch (Exception ignored) {
             }
         }
+    }
 
-        if (Boolean.TRUE.equals(readBoolean(properties, prefix + SELECTED_SUFFIX))) {
-            try {
-                frame.setSelected(true);
-                frame.toFront();
-            } catch (Exception ignored) {
+    private void restoreInternalFrameOrder(Properties properties, JInternalFrame... internalFrames)
+    {
+        List<JInternalFrame> orderedFrames = new ArrayList<>();
+        for (JInternalFrame frame : internalFrames) {
+            if (frame == null || frame.getParent() == null) {
+                continue;
             }
+
+            String prefix = getInternalWindowPrefix(frame);
+            if (readInteger(properties, prefix + Z_ORDER_SUFFIX) != null) {
+                orderedFrames.add(frame);
+            }
+        }
+
+        orderedFrames.sort(Comparator.<JInternalFrame>comparingInt(
+            frame -> readInteger(properties, getInternalWindowPrefix(frame) + Z_ORDER_SUFFIX)
+        ).reversed());
+
+        for (JInternalFrame frame : orderedFrames) {
+            Container parent = frame.getParent();
+            Integer zOrder = readInteger(properties, getInternalWindowPrefix(frame) + Z_ORDER_SUFFIX);
+            if (parent == null || zOrder == null) {
+                continue;
+            }
+
+            int restoredOrder = Math.max(0, Math.min(zOrder, parent.getComponentCount() - 1));
+            parent.setComponentZOrder(frame, restoredOrder);
+        }
+    }
+
+    private void restoreSelectedFrame(JInternalFrame selectedFrame)
+    {
+        if (selectedFrame == null) {
+            return;
+        }
+
+        try {
+            selectedFrame.setSelected(true);
+            selectedFrame.toFront();
+        } catch (Exception ignored) {
         }
     }
 
@@ -203,6 +257,20 @@ public final class WindowStateManager
             name = frame.getClass().getSimpleName();
         }
         return INTERNAL_WINDOW_PREFIX + name;
+    }
+
+    private String extractInternalWindowName(String key)
+    {
+        if (!key.startsWith(INTERNAL_WINDOW_PREFIX)) {
+            return null;
+        }
+
+        int nameStart = INTERNAL_WINDOW_PREFIX.length();
+        int nameEnd = key.indexOf('.', nameStart);
+        if (nameEnd < 0) {
+            return null;
+        }
+        return key.substring(nameStart, nameEnd);
     }
 
     private Integer readInteger(Properties properties, String key)
