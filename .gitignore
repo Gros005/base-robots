@@ -6,7 +6,11 @@
 /.idea/
 *.iml
 /out/
+/base-robots/
+/Thumbs.db
+/.DS_Store
 
 /.gradle/
 /build/
 **/build/
+/robots/test

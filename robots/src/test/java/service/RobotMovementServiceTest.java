@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 
 import java.awt.Point;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -110,6 +111,20 @@ public class RobotMovementServiceTest {
     public void testNullListener() {
         assertDoesNotThrow(() -> service.addListener(null));
         assertDoesNotThrow(() -> service.removeListener(null));
+    }
+
+    @Test
+    public void testRobotTurnsAcrossAngleWrapWithoutStalling() throws Exception {
+        service.shutdown();
+        robot.move(0, -robot.getMaxAngularVelocity(), 10);
+        service.setTarget(new Point(200, 100));
+
+        Method updateMethod = RobotMovementService.class.getDeclaredMethod("updateRobotPosition");
+        updateMethod.setAccessible(true);
+        updateMethod.invoke(service);
+
+        assertTrue(robot.getDirection() < 0.1, "Robot should choose the short turn across zero radians");
+        assertTrue(robot.getPositionX() > 100.0, "Robot should continue moving toward the target");
     }
 
     private void sleep(int ms) {

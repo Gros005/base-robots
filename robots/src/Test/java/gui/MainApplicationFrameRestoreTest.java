@@ -1,7 +1,7 @@
 package gui;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.SwingUtilities;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class MainApplicationFrameRestoreTest {
     private final Path statePath = Path.of(System.getProperty("user.home"), ".robots", "window-state.properties");
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         Files.deleteIfExists(statePath);
     }

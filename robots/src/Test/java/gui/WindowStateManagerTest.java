@@ -1,8 +1,8 @@
 package gui;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -13,9 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WindowStateManagerTest {
     private WindowStateManager manager;
@@ -25,7 +25,7 @@ public class WindowStateManagerTest {
     private JDesktopPane desktopPane;
     private Path testConfigPath;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testConfigPath = Path.of(System.getProperty("user.home"), ".robots", "window-state.properties");
         manager = new WindowStateManager(testConfigPath);
@@ -43,7 +43,7 @@ public class WindowStateManagerTest {
         desktopPane.add(gameFrame);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         Files.deleteIfExists(testConfigPath);
         mainFrame.dispose();
