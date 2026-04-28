@@ -11,6 +11,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Сервис, управляющий движением робота
  */
 public class RobotMovementService {
+    private static final double FULL_CIRCLE_RADIANS = Math.PI * 2;
+    private static final double HALF_CIRCLE_RADIANS = Math.PI;
     private final Robot robot;
     private final Timer timer;
     private final CopyOnWriteArrayList<RobotMovementListener> listeners;
@@ -65,11 +67,12 @@ public class RobotMovementService {
         double velocity = robot.getMaxVelocity();
         double angleToTarget = robot.getAngleToTarget();
         double currentDirection = robot.getDirection();
+        double angleDifference = normalizeAngleDifference(angleToTarget - currentDirection);
 
         double angularVelocity = 0;
-        if (angleToTarget > currentDirection) {
+        if (angleDifference > 0) {
             angularVelocity = robot.getMaxAngularVelocity();
-        } else if (angleToTarget < currentDirection) {
+        } else if (angleDifference < 0) {
             angularVelocity = -robot.getMaxAngularVelocity();
         }
 
@@ -112,5 +115,15 @@ public class RobotMovementService {
     public void shutdown() {
         timer.cancel();
         listeners.clear();
+    }
+
+    private double normalizeAngleDifference(double angleDifference) {
+        while (angleDifference <= -HALF_CIRCLE_RADIANS) {
+            angleDifference += FULL_CIRCLE_RADIANS;
+        }
+        while (angleDifference > HALF_CIRCLE_RADIANS) {
+            angleDifference -= FULL_CIRCLE_RADIANS;
+        }
+        return angleDifference;
     }
 }

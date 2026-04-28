@@ -1,13 +1,16 @@
-/.metadata
-/robots/.settings
-/robots/bin
-eclipse.bat
+/.metadata/
+/robots/.settings/
+/robots/bin/
+/eclipse.bat
 
-.idea
-*.jar
+/.idea/
+*.iml
+/out/
+/base-robots/
+/Thumbs.db
+/.DS_Store
 
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build
+/.gradle/
+/build/
+**/build/
+/robots/test
