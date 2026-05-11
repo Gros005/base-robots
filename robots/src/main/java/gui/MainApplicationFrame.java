@@ -2,23 +2,22 @@ package gui;
 
 import factory.MenuBarFactory;
 import factory.WindowFactory;
+import config.WindowState;
+import config.ColorSettings;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Главное окно приложения координирует работу.
- */
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private GameWindow gameWindow;
+    private LogWindow logWindow;
 
     private static final int WINDOW_INSET = 50;
     private static final int YES_BUTTON_INDEX = 0;
     private static final int NO_BUTTON_INDEX = 1;
 
     public MainApplicationFrame() {
-        // Размеры окна
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(WINDOW_INSET, WINDOW_INSET,
                 screenSize.width - WINDOW_INSET * 2,
@@ -26,34 +25,33 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
         createWindows();
+
+        WindowState.getInstance().registerWindows(this, gameWindow, logWindow);
+        WindowState.getInstance().load();
+        ColorSettings.getInstance().load();
+
         setupMenu();
         setupWindowClosing();
     }
 
-    /**
-     * Создает внутренние окна приложения
-     */
     private void createWindows() {
-        // Создаем игровое окно
         gameWindow = WindowFactory.createGameWindow();
         addWindow(gameWindow);
 
-        // Создаем окно логов
-        LogWindow logWindow = WindowFactory.createLogWindow();
+        logWindow = WindowFactory.createLogWindow();
         addWindow(logWindow);
+
+        CoordinateWindow coordinateWindow = WindowFactory.createCoordinateWindow();
+        addWindow(coordinateWindow);
+
+        gameWindow.getSinglePanel().setCoordinateWindow(coordinateWindow);
     }
 
-    /**
-     * Настраивает меню приложения
-     */
     private void setupMenu() {
         MenuBarFactory menuBarFactory = new MenuBarFactory(this, gameWindow);
         setJMenuBar(menuBarFactory.createMenuBar());
     }
 
-    /**
-     * Настраивает обработку закрытия окна
-     */
     private void setupWindowClosing() {
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -64,17 +62,11 @@ public class MainApplicationFrame extends JFrame {
         });
     }
 
-    /**
-     * Добавляет внутреннее окно
-     */
     public void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
     }
 
-    /**
-     * Обработка выхода из приложения
-     */
     private void exitApplication() {
         String[] buttons = {
                 Language.get("dialog.exit.yes"),
@@ -93,9 +85,11 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == YES_BUTTON_INDEX) {
-            // Очищаем ресурсы перед выходом
-            if (gameWindow != null && gameWindow.getVisualizer() != null) {
-                gameWindow.getVisualizer().shutdown();
+            WindowState.getInstance().save();
+            ColorSettings.getInstance().save();
+
+            if (gameWindow != null) {
+                gameWindow.shutdown();
             }
 
             log.Logger.debug(Language.get("log.appClosing"));
@@ -105,10 +99,13 @@ public class MainApplicationFrame extends JFrame {
         }
     }
 
-    /**
-     * Для доступа из MenuBarFactory
-     */
     public JDesktopPane getDesktopPane() {
         return desktopPane;
+    }
+
+    public void startRaceSetup() {
+        int robotCount = RaceSetupDialog.showRobotCountDialog(this);
+        RaceSetupDialog.PlacementMode mode = RaceSetupDialog.showPlacementModeDialog(this);
+        gameWindow.switchToRaceMode(robotCount, mode);
     }
 }

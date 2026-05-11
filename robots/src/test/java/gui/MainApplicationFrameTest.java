@@ -4,6 +4,7 @@ import factory.WindowFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.swing.*;
+
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -125,4 +126,72 @@ public class MainApplicationFrameTest {
 
         assertTrue(foundWindowsMenu, "Windows menu not found");
     }
+
+    @Test
+    public void testExitApplicationMethodExists() {
+        try {
+            Method exitMethod = MainApplicationFrame.class.getDeclaredMethod("exitApplication");
+            assertNotNull(exitMethod);
+        } catch (NoSuchMethodException e) {
+            fail("Method exitApplication not found");
+        }
+    }
+
+    @Test
+    public void testRobotColorMenuExists() {
+        JMenuBar menuBar = frame.getJMenuBar();
+        assertNotNull(menuBar);
+
+        boolean foundColorMenu = false;
+        for (int i = 0; i < menuBar.getMenuCount(); i++) {
+            JMenu menu = menuBar.getMenu(i);
+            if (menu != null) {
+                String text = menu.getText();
+                if (text.equals("Цвет робота") || text.equals("Robot Color")) {
+                    foundColorMenu = true;
+                    break;
+                }
+            }
+        }
+        assertTrue(foundColorMenu, "Robot Color menu not found");
+    }
+
+    @Test
+    public void testTargetColorMenuExists() {
+        JMenuBar menuBar = frame.getJMenuBar();
+        assertNotNull(menuBar);
+
+        boolean foundTargetColorMenu = false;
+        for (int i = 0; i < menuBar.getMenuCount(); i++) {
+            JMenu menu = menuBar.getMenu(i);
+            if (menu != null) {
+                String text = menu.getText();
+                if (text.equals("Цвет цели") || text.equals("Target Color")) {
+                    foundTargetColorMenu = true;
+                    break;
+                }
+            }
+        }
+        assertTrue(foundTargetColorMenu, "Target Color menu not found");
+    }
+
+    @Test
+    public void testTrailColorMenuExists() {
+        JMenuBar menuBar = frame.getJMenuBar();
+        assertNotNull(menuBar);
+
+        boolean foundTrailColorMenu = false;
+        for (int i = 0; i < menuBar.getMenuCount(); i++) {
+            JMenu menu = menuBar.getMenu(i);
+            if (menu != null) {
+                String text = menu.getText();
+                if (text.equals("Цвет следа") || text.equals("Trail Color")) {
+                    foundTrailColorMenu = true;
+                    break;
+                }
+            }
+        }
+        assertTrue(foundTrailColorMenu, "Trail Color menu not found");
+    }
+
 }

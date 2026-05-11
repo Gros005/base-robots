@@ -1,7 +1,7 @@
 package model;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.awt.Point;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,79 +12,88 @@ public class RobotTest {
     @BeforeEach
     public void setUp() {
         robot = new Robot();
+        robot.updateBounds(800, 600);
     }
 
     @Test
     public void testDefaultConstructor() {
-        assertEquals(100.0, robot.getPositionX(), 0.001);
-        assertEquals(100.0, robot.getPositionY(), 0.001);
+        assertEquals(100.0, robot.getX(), 0.001);
+        assertEquals(100.0, robot.getY(), 0.001);
         assertEquals(0.0, robot.getDirection(), 0.001);
-
-        Point target = robot.getTarget();
-        assertEquals(150, target.x);
-        assertEquals(100, target.y);
-    }
-
-    @Test
-    public void testCustomConstructor() {
-        Robot customRobot = new Robot(200, 300, 400, 500);
-
-        assertEquals(200.0, customRobot.getPositionX(), 0.001);
-        assertEquals(300.0, customRobot.getPositionY(), 0.001);
-        assertEquals(0.0, customRobot.getDirection(), 0.001);
-
-        Point target = customRobot.getTarget();
-        assertEquals(400, target.x);
-        assertEquals(500, target.y);
+        assertFalse(robot.isStopped());
     }
 
     @Test
     public void testSetTarget() {
-        Point newTarget = new Point(800, 600);
-        robot.setTarget(newTarget);
+        Point target = new Point(500, 400);
+        robot.setTarget(target);
 
+        Point result = robot.getTarget();
+        assertEquals(500, result.x);
+        assertEquals(400, result.y);
+        assertFalse(robot.isStopped());
+    }
+
+    @Test
+    public void testUpdateBounds() {
+        robot.updateBounds(1024, 768);
+
+        robot.setTarget(new Point(2000, 2000));
         Point target = robot.getTarget();
-        assertEquals(800, target.x);
-        assertEquals(600, target.y);
+        assertTrue(target.x <= 1004);
+        assertTrue(target.y <= 748);
+    }
 
-        // Проверяем иммутабельность
-        newTarget.x = 999;
-        target = robot.getTarget();
-        assertEquals(800, target.x);
+    @Test
+    public void testMoveOneStep() {
+        robot.setTarget(new Point(200, 100));
+        double oldX = robot.getX();
+        double oldY = robot.getY();
+
+        boolean moved = robot.moveOneStep();
+
+        assertTrue(moved);
+        assertTrue(robot.getX() != oldX || robot.getY() != oldY);
+    }
+
+    @Test
+    public void testStopsAtTarget() {
+        robot.reset();
+        robot.updateBounds(800, 600);
+
+        double startX = robot.getX();
+        double startY = robot.getY();
+        robot.setTarget(new Point((int) startX, (int) startY));
+
+        boolean moved = false;
+        for (int i = 0; i < 10; i++) {
+            if (robot.moveOneStep()) {
+                moved = true;
+            }
+        }
+        assertTrue(Math.abs(robot.getX() - startX) < 0.1, "Робот не должен значительно двигаться");
+        assertTrue(Math.abs(robot.getY() - startY) < 0.1, "Робот не должен значительно двигаться");
+        assertTrue(robot.isStopped(), "Робот должен быть остановлен");
     }
 
     @Test
     public void testReset() {
-        // Сначала изменим позицию
-        robot.setTarget(new Point(500, 500));
-        robot.move(0.1, 0.001, 100);
+        robot.setTarget(new Point(500, 400));
 
-        // Запоминаем, что позиция изменилась
-        assertNotEquals(100.0, robot.getPositionX());
+        assertEquals(500, robot.getTarget().x);
+        assertEquals(400, robot.getTarget().y);
 
-        // Сбрасываем
         robot.reset();
-
-        assertEquals(100.0, robot.getPositionX(), 0.001);
-        assertEquals(100.0, robot.getPositionY(), 0.001);
+        robot.updateBounds(800, 600);
+        assertEquals(100.0, robot.getX(), 0.001);
+        assertEquals(100.0, robot.getY(), 0.001);
         assertEquals(0.0, robot.getDirection(), 0.001);
+        assertFalse(robot.isStopped());
 
         Point target = robot.getTarget();
-        assertEquals(150, target.x);
-        assertEquals(100, target.y);
-    }
-
-    @Test
-    public void testMove() {
-        double oldX = robot.getPositionX();
-        double oldY = robot.getPositionY();
-        double oldDir = robot.getDirection();
-
-        robot.move(0.1, 0.001, 10);
-
-        assertNotEquals(oldX, robot.getPositionX());
-        assertNotEquals(oldY, robot.getPositionY());
-        assertNotEquals(oldDir, robot.getDirection());
+        System.out.println("Target after reset: (" + target.x + ", " + target.y + ")");
+        assertEquals(150, target.x, "Цель по X должна быть 150");
+        assertEquals(100, target.y, "Цель по Y должна быть 100");
     }
 
     @Test
@@ -112,8 +121,32 @@ public class RobotTest {
     }
 
     @Test
-    public void testGetters() {
-        assertTrue(robot.getMaxVelocity() > 0);
-        assertTrue(robot.getMaxAngularVelocity() > 0);
+    public void testClampToBounds() {
+        robot.updateBounds(800, 600);
+
+        robot.setTarget(new Point(900, 300));
+        Point target = robot.getTarget();
+        assertEquals(780, target.x);
+
+        robot.setTarget(new Point(-50, 300));
+        target = robot.getTarget();
+        assertEquals(20, target.x);
+
+        robot.setTarget(new Point(400, 700));
+        target = robot.getTarget();
+        assertEquals(580, target.y);
+
+        robot.setTarget(new Point(400, -50));
+        target = robot.getTarget();
+        assertEquals(20, target.y);
+    }
+
+    @Test
+    public void testSetStopped() {
+        robot.setStopped(true);
+        assertTrue(robot.isStopped());
+
+        boolean moved = robot.moveOneStep();
+        assertFalse(moved);
     }
 }
