@@ -11,7 +11,9 @@ public class RobotTest {
 
     @BeforeEach
     public void setUp() {
+
         robot = new Robot();
+        robot.updateBounds(800, 600);
     }
 
     @Test
@@ -26,38 +28,61 @@ public class RobotTest {
     }
 
     @Test
-    public void testCustomConstructor() {
-        Robot customRobot = new Robot(200, 300, 400, 500);
+    public void testSetTarget() {
+        // Создаём нового робота для чистоты теста
+        Robot testRobot = new Robot();
 
-        assertEquals(200.0, customRobot.getPositionX(), 0.001);
-        assertEquals(300.0, customRobot.getPositionY(), 0.001);
-        assertEquals(0.0, customRobot.getDirection(), 0.001);
+        // Цель в пределах границ
+        Point validTarget = new Point(700, 500);
+        testRobot.setTarget(validTarget);
 
-        Point target = customRobot.getTarget();
-        assertEquals(400, target.x);
-        assertEquals(500, target.y);
+        Point target = testRobot.getTarget();
+        assertEquals(700, target.x, "X should be 700");
+        assertEquals(500, target.y, "Y should be 500");
+        assertFalse(testRobot.isStopped());
+
+        // Цель за пределами границ X
+        Point outOfBoundsX = new Point(800, 400);
+        testRobot.setTarget(outOfBoundsX);
+
+        Point clampedTargetX = testRobot.getTarget();
+        assertEquals(780, clampedTargetX.x, "X should be clamped to 780");
+        assertEquals(400, clampedTargetX.y);
+
+        // Цель за пределами границ Y
+        Point outOfBoundsY = new Point(500, 600);
+        testRobot.setTarget(outOfBoundsY);
+
+        Point clampedTargetY = testRobot.getTarget();
+        assertEquals(500, clampedTargetY.x);
+        assertEquals(580, clampedTargetY.y, "Y should be clamped to 580");
+
+        // Цель за пределами обеих границ
+        Point outOfBoundsBoth = new Point(900, 900);
+        testRobot.setTarget(outOfBoundsBoth);
+
+        Point clampedTargetBoth = testRobot.getTarget();
+        assertEquals(780, clampedTargetBoth.x, "X should be clamped to 780");
+        assertEquals(580, clampedTargetBoth.y, "Y should be clamped to 580");
     }
 
     @Test
-    public void testSetTarget() {
-        Point newTarget = new Point(800, 600);
-        robot.setTarget(newTarget);
+    public void testUpdateBounds() {
+        // Проверяем, что границы обновляются корректно
+        robot.updateBounds(1000, 800);
 
+        // Робот не должен выйти за новые границы
+        robot.setTarget(new Point(900, 700));
         Point target = robot.getTarget();
-        assertEquals(800, target.x);
-        assertEquals(600, target.y);
-
-        // Проверяем иммутабельность
-        newTarget.x = 999;
-        target = robot.getTarget();
-        assertEquals(800, target.x);
+        assertTrue(target.x <= 980);  // maxX = 1000 - 20 = 980
+        assertTrue(target.y <= 780);  // maxY = 800 - 20 = 780
     }
 
     @Test
     public void testReset() {
         // Сначала изменим позицию
         robot.setTarget(new Point(500, 500));
-        robot.move(0.1, 0.001, 100);
+        robot.moveOneStep();
 
         // Запоминаем, что позиция изменилась
         assertNotEquals(100.0, robot.getPositionX());
@@ -75,16 +100,19 @@ public class RobotTest {
     }
 
     @Test
-    public void testMove() {
-        double oldX = robot.getPositionX();
-        double oldY = robot.getPositionY();
-        double oldDir = robot.getDirection();
-
-        robot.move(0.1, 0.001, 10);
-
-        assertNotEquals(oldX, robot.getPositionX());
-        assertNotEquals(oldY, robot.getPositionY());
-        assertNotEquals(oldDir, robot.getDirection());
+    public void testMoveOneStep() {
+        robot.setTarget(new Point(200, 100));
+        double startX = robot.getPositionX();
+        double startY = robot.getPositionY();
+        boolean moved = false;
+        for (int i = 0; i < 5; i++) {
+            if (robot.moveOneStep()) {
+                moved = true;
+            }
+        }
+        // Проверяем, что позиция изменилась
+        assertTrue(moved || (robot.getPositionX() != startX || robot.getPositionY() != startY),
+                "Robot should move towards target");
     }
 
     @Test

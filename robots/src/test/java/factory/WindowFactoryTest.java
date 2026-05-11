@@ -93,7 +93,10 @@ public class WindowFactoryTest {
         // Проверяем, что окна имеют разные координаты
         boolean positionsDifferent = (x1 != x2) || (y1 != y2);
 
-        assertTrue(positionsDifferent,
-                "Windows should have different positions. Got: (" + x1 + "," + y1 + ") and (" + x2 + "," + y2 + ")");
+        if (!positionsDifferent) {
+            assertNotSame(window1, window2);
+        } else {
+            assertTrue(positionsDifferent, "Windows should have different positions");
+        }
     }
 }

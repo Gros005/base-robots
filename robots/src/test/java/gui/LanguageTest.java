@@ -17,6 +17,17 @@ public class LanguageTest {
         assertEquals("Русский", Language.get("menu.language.russian"));
         assertEquals("Английский", Language.get("menu.language.english"));
 
+        assertEquals("Цвет робота", Language.get("menu.color"));
+        assertEquals("Красный", Language.get("menu.color.red"));
+        assertEquals("Синий", Language.get("menu.color.blue"));
+        assertEquals("Зелёный", Language.get("menu.color.green"));
+        assertEquals("Жёлтый", Language.get("menu.color.yellow"));
+        assertEquals("Фиолетовый", Language.get("menu.color.purple"));
+        assertEquals("Цвет цели", Language.get("menu.targetColor"));
+        assertEquals("Цвет следа", Language.get("menu.trailColor"));
+        assertEquals("Серый", Language.get("menu.trailColor.gray"));
+
+
         assertEquals("Подтверждение выхода", Language.get("dialog.exit.title"));
         assertEquals("Вы действительно хотите выйти?", Language.get("dialog.exit.message"));
         assertEquals("Да", Language.get("dialog.exit.yes"));
@@ -36,6 +47,16 @@ public class LanguageTest {
         assertEquals("Language", Language.get("menu.language"));
         assertEquals("Russian", Language.get("menu.language.russian"));
         assertEquals("English", Language.get("menu.language.english"));
+
+        assertEquals("Robot Color", Language.get("menu.color"));
+        assertEquals("Red", Language.get("menu.color.red"));
+        assertEquals("Blue", Language.get("menu.color.blue"));
+        assertEquals("Green", Language.get("menu.color.green"));
+        assertEquals("Yellow", Language.get("menu.color.yellow"));
+        assertEquals("Purple", Language.get("menu.color.purple"));
+        assertEquals("Target Color", Language.get("menu.targetColor"));
+        assertEquals("Trail Color", Language.get("menu.trailColor"));
+        assertEquals("Gray", Language.get("menu.trailColor.gray"));
 
         assertEquals("Confirm Exit", Language.get("dialog.exit.title"));
         assertEquals("Do you really want to exit?", Language.get("dialog.exit.message"));

@@ -2,6 +2,8 @@ package gui;
 
 import factory.MenuBarFactory;
 import factory.WindowFactory;
+import config.WindowState;
+import config.ColorSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,13 +14,13 @@ import java.awt.*;
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private GameWindow gameWindow;
+    private LogWindow logWindow;
 
     private static final int WINDOW_INSET = 50;
     private static final int YES_BUTTON_INDEX = 0;
     private static final int NO_BUTTON_INDEX = 1;
 
     public MainApplicationFrame() {
-        // Размеры окна
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(WINDOW_INSET, WINDOW_INSET,
                 screenSize.width - WINDOW_INSET * 2,
@@ -26,6 +28,13 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
         createWindows();
+
+        // Регистрируем окна для сохранения состояния
+        WindowState.getInstance().registerWindows(this, gameWindow, logWindow);
+
+        WindowState.getInstance().load();
+        ColorSettings.getInstance().load();
+
         setupMenu();
         setupWindowClosing();
     }
@@ -34,13 +43,14 @@ public class MainApplicationFrame extends JFrame {
      * Создает внутренние окна приложения
      */
     private void createWindows() {
-        // Создаем игровое окно
         gameWindow = WindowFactory.createGameWindow();
         addWindow(gameWindow);
 
-        // Создаем окно логов
-        LogWindow logWindow = WindowFactory.createLogWindow();
+        logWindow = WindowFactory.createLogWindow();
         addWindow(logWindow);
+        CoordinateWindow coordinateWindow = WindowFactory.createCoordinateWindow(gameWindow.getVisualizer().getRobot());
+        addWindow(coordinateWindow);
+        gameWindow.getVisualizer().getMovementService().addListener(coordinateWindow);
     }
 
     /**
@@ -64,12 +74,22 @@ public class MainApplicationFrame extends JFrame {
         });
     }
 
+
     /**
      * Добавляет внутреннее окно
      */
     public void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
+
+        // Если это игровое окно — обновляем границы робота
+        if (frame instanceof GameWindow) {
+            GameWindow game_wind = (GameWindow) frame;
+            GameVisualizer visualizer = game_wind.getVisualizer();
+            if (visualizer != null) {
+                SwingUtilities.invokeLater(visualizer::updateRobotBounds);
+            }
+        }
     }
 
     /**
@@ -93,7 +113,10 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == YES_BUTTON_INDEX) {
-            // Очищаем ресурсы перед выходом
+            // Сохраняем состояние окон и цветов
+            WindowState.getInstance().save();
+            ColorSettings.getInstance().save();
+
             if (gameWindow != null && gameWindow.getVisualizer() != null) {
                 gameWindow.getVisualizer().shutdown();
             }
