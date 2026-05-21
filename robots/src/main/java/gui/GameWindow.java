@@ -1,33 +1,65 @@
 package gui;
 
-import java.awt.BorderLayout;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import java.awt.BorderLayout;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Окно с игровым полем контейнер для GameVisualizer.
+ * Окно с игровым полем.
  */
 public class GameWindow extends JInternalFrame {
-    private final GameVisualizer m_visualizer;
+    private final GameVisualizer visualizer;
+    private final Runnable closeAction;
+    private final AtomicBoolean cleanedUp = new AtomicBoolean(false);
 
-    /**
-     * @param visualizer визуализатор для отображения
-     */
     public GameWindow(GameVisualizer visualizer) {
+        this(visualizer, () -> {
+        });
+    }
+
+    public GameWindow(GameVisualizer visualizer, Runnable closeAction) {
         super("Игровое поле", true, true, true, true);
-        this.m_visualizer = visualizer;
+        this.visualizer = visualizer;
+        this.closeAction = closeAction;
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_visualizer, BorderLayout.CENTER);
+        panel.add(visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
 
+        setupCleanupHandler();
         pack();
     }
 
-    /**
-     * Визуализатор для доступа из других классов
-     */
     public GameVisualizer getVisualizer() {
-        return m_visualizer;
+        return visualizer;
+    }
+
+    private void setupCleanupHandler() {
+        addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent event) {
+                cleanupResources();
+            }
+
+            @Override
+            public void internalFrameClosing(InternalFrameEvent event) {
+                cleanupResources();
+            }
+        });
+    }
+
+    private void cleanupResources() {
+        if (!cleanedUp.compareAndSet(false, true)) {
+            return;
+        }
+
+        visualizer.shutdown();
+        try {
+            closeAction.run();
+        } catch (Exception ignored) {
+        }
     }
 }

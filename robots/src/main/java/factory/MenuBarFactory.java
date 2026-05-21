@@ -5,6 +5,7 @@ import gui.Language;
 import gui.MainApplicationFrame;
 import log.Logger;
 
+import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -12,9 +13,12 @@ import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +55,10 @@ public class MenuBarFactory {
         newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_DOWN_MASK));
         newItem.addActionListener(this::onNew);
         menu.add(newItem);
+
+        JMenuItem loadJarItem = new JMenuItem("Загрузить робота из JAR...");
+        loadJarItem.addActionListener(this::onLoadRobotFromJar);
+        menu.add(loadJarItem);
 
         menu.addSeparator();
 
@@ -169,6 +177,33 @@ public class MenuBarFactory {
             "Новое окно",
             JOptionPane.INFORMATION_MESSAGE
         );
+    }
+
+    private void onLoadRobotFromJar(ActionEvent event) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Выберите JAR с роботом");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("JAR archives", "jar"));
+
+        int result = fileChooser.showOpenDialog(parentFrame);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        Path jarPath = fileChooser.getSelectedFile().toPath();
+        try {
+            GameWindow loadedWindow = WindowFactory.createJarRobotWindow(jarPath);
+            parentFrame.addGameWindow(loadedWindow);
+            allGameWindows.add(loadedWindow);
+            Logger.debug("Загружен робот из JAR: " + jarPath.getFileName());
+        } catch (IOException exception) {
+            JOptionPane.showMessageDialog(
+                parentFrame,
+                exception.getMessage(),
+                "Не удалось загрузить робота",
+                JOptionPane.ERROR_MESSAGE
+            );
+            Logger.debug("Ошибка загрузки робота из JAR: " + exception.getMessage());
+        }
     }
 
     private void updateUILanguage() {

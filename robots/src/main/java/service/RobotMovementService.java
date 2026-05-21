@@ -1,36 +1,37 @@
 package service;
 
-import model.Robot;
 import listener.RobotMovementListener;
+import model.Robot;
+import plugin.DefaultRobotController;
+import plugin.RobotController;
 
+import java.awt.Point;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Сервис, управляющий движением робота
+ * Сервис, управляющий движением робота.
  */
 public class RobotMovementService {
-    private static final double FULL_CIRCLE_RADIANS = Math.PI * 2;
-    private static final double HALF_CIRCLE_RADIANS = Math.PI;
+    private static final int MOVEMENT_INTERVAL_MS = 10;
+    private static final int MOVEMENT_STEP_DURATION = 10;
+
     private final Robot robot;
+    private final RobotController controller;
     private final Timer timer;
     private final CopyOnWriteArrayList<RobotMovementListener> listeners;
 
-    private static final int MOVEMENT_INTERVAL_MS = 10;
-    private static final double TARGET_REACHED_THRESHOLD = 0.5;  // порог цели
-    private static final int MOVEMENT_STEP_DURATION = 10;
-
-    /**
-     * Создает сервис движения для конкретного робота
-     * @param robot робот, которым нужно управлять
-     */
     public RobotMovementService(Robot robot) {
-        this.robot = robot;
-        this.listeners = new CopyOnWriteArrayList<>();
-        this.timer = new Timer("RobotMovementTimer", true); // daemon thread
+        this(robot, new DefaultRobotController());
+    }
 
-        // Запускаем таймер на обновление позиции каждые 10 мс
+    public RobotMovementService(Robot robot, RobotController controller) {
+        this.robot = robot;
+        this.controller = controller;
+        this.listeners = new CopyOnWriteArrayList<>();
+        this.timer = new Timer("RobotMovementTimer", true);
+
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -39,91 +40,42 @@ public class RobotMovementService {
         }, 0, MOVEMENT_INTERVAL_MS);
     }
 
-    /**
-     * Добавляет слушателя
-     */
     public void addListener(RobotMovementListener listener) {
         if (listener != null) {
             listeners.add(listener);
         }
     }
 
-    /**
-     * Удаляет слушателя
-     */
     public void removeListener(RobotMovementListener listener) {
         listeners.remove(listener);
     }
 
-    /**
-     * Обновляет позицию робота на основе текущей цели
-     */
     private void updateRobotPosition() {
-        // Если робот уже близко к цели - не двигаемся
-        if (robot.getDistanceToTarget() < TARGET_REACHED_THRESHOLD) {
-            return;
-        }
-
-        double velocity = robot.getMaxVelocity();
-        double angleToTarget = robot.getAngleToTarget();
-        double currentDirection = robot.getDirection();
-        double angleDifference = normalizeAngleDifference(angleToTarget - currentDirection);
-
-        double angularVelocity = 0;
-        if (angleDifference > 0) {
-            angularVelocity = robot.getMaxAngularVelocity();
-        } else if (angleDifference < 0) {
-            angularVelocity = -robot.getMaxAngularVelocity();
-        }
-
-        robot.move(velocity, angularVelocity, MOVEMENT_STEP_DURATION);
+        controller.update(robot, MOVEMENT_STEP_DURATION);
         notifyListeners();
     }
 
-    /**
-     * Уведомляет всех слушателей о движении робота
-     */
     private void notifyListeners() {
         for (RobotMovementListener listener : listeners) {
             try {
                 listener.onRobotMoved(robot);
-            } catch (Exception e) {
-                // Логируем ошибку, но не даем ей остановить другие уведомления
-                System.err.println("Error notifying listener: " + e.getMessage());
+            } catch (Exception exception) {
+                System.err.println("Error notifying listener: " + exception.getMessage());
             }
         }
     }
 
-    /**
-     * Устанавливает новую цель для робота
-     */
-    public void setTarget(java.awt.Point target) {
+    public void setTarget(Point target) {
         robot.setTarget(target);
     }
 
-    /**
-     * Сбрасывает робота в начальное состояние
-     */
     public void resetRobot() {
         robot.reset();
         notifyListeners();
     }
 
-    /**
-     * Останавливает сервис
-     */
     public void shutdown() {
         timer.cancel();
         listeners.clear();
-    }
-
-    private double normalizeAngleDifference(double angleDifference) {
-        while (angleDifference <= -HALF_CIRCLE_RADIANS) {
-            angleDifference += FULL_CIRCLE_RADIANS;
-        }
-        while (angleDifference > HALF_CIRCLE_RADIANS) {
-            angleDifference -= FULL_CIRCLE_RADIANS;
-        }
-        return angleDifference;
     }
 }
