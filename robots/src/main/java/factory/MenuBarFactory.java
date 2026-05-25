@@ -38,13 +38,14 @@ public class MenuBarFactory {
         menuBar.add(createViewMenu());
         menuBar.add(createTestsMenu());
         menuBar.add(createWindowsMenu());
+        menuBar.add(createRaceMenu());
 
         return menuBar;
     }
 
     private JMenuItem createColorMenuItem(String colorKey, ColorSettings.ColorPreset preset, Consumer<ColorSettings.ColorPreset> setter) {
         JMenuItem item = new JMenuItem(Language.get(colorKey));
-        item.addActionListener(e -> {
+        item.addActionListener(_ -> {
             setter.accept(preset);
             updateColors();
         });
@@ -82,7 +83,7 @@ public class MenuBarFactory {
                 ColorSettings.getInstance().setTrailColor(preset));
 
         JMenuItem grayItem = new JMenuItem(Language.get("menu.trailColor.gray"));
-        grayItem.addActionListener(e -> {
+        grayItem.addActionListener(_ -> {
             ColorSettings.getInstance().setTrailColor(ColorSettings.ColorPreset.GRAY);
             updateColors();
         });
@@ -107,7 +108,7 @@ public class MenuBarFactory {
         JMenuItem quitItem = new JMenuItem(Language.get("menu.file.quit"));
         quitItem.setMnemonic(KeyEvent.VK_Q);
         quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.ALT_DOWN_MASK));
-        quitItem.addActionListener(e -> {
+        quitItem.addActionListener(_ -> {
             parentFrame.dispatchEvent(new java.awt.event.WindowEvent(
                     parentFrame, java.awt.event.WindowEvent.WINDOW_CLOSING
             ));
@@ -122,14 +123,14 @@ public class MenuBarFactory {
         menu.setMnemonic(KeyEvent.VK_L);
 
         JMenuItem russianItem = new JMenuItem(Language.get("menu.language.russian"));
-        russianItem.addActionListener(e -> {
+        russianItem.addActionListener(_ -> {
             Language.setLanguage(Language.Lang.RUSSIAN);
             updateUILanguage();
         });
         menu.add(russianItem);
 
         JMenuItem englishItem = new JMenuItem(Language.get("menu.language.english"));
-        englishItem.addActionListener(e -> {
+        englishItem.addActionListener(_ -> {
             Language.setLanguage(Language.Lang.ENGLISH);
             updateUILanguage();
         });
@@ -143,15 +144,11 @@ public class MenuBarFactory {
         menu.setMnemonic(KeyEvent.VK_V);
 
         JMenuItem systemItem = new JMenuItem(Language.get("menu.view.lookAndFeel.system"));
-        systemItem.addActionListener(e -> {
-            setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        });
+        systemItem.addActionListener(_ -> setLookAndFeel(UIManager.getSystemLookAndFeelClassName()));
         menu.add(systemItem);
 
         JMenuItem crossItem = new JMenuItem(Language.get("menu.view.lookAndFeel.cross"));
-        crossItem.addActionListener(e -> {
-            setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        });
+        crossItem.addActionListener(_ -> setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()));
         menu.add(crossItem);
 
         return menu;
@@ -162,7 +159,7 @@ public class MenuBarFactory {
         menu.setMnemonic(KeyEvent.VK_T);
 
         JMenuItem addLogItem = new JMenuItem(Language.get("menu.tests.addLog"));
-        addLogItem.addActionListener(e -> Logger.debug("Новая строка"));
+        addLogItem.addActionListener(_ -> Logger.debug("Новая строка"));
         menu.add(addLogItem);
 
         return menu;
@@ -173,7 +170,7 @@ public class MenuBarFactory {
         menu.setMnemonic(KeyEvent.VK_W);
 
         JMenuItem closeAllItem = new JMenuItem("Закрыть все");
-        closeAllItem.addActionListener(e -> closeAllGameWindows());
+        closeAllItem.addActionListener(_ -> closeAllGameWindows());
         menu.add(closeAllItem);
 
         menu.addSeparator();
@@ -191,7 +188,7 @@ public class MenuBarFactory {
             GameWindow window = allGameWindows.get(i);
             if (window.isVisible()) {
                 JMenuItem windowItem = new JMenuItem("Окно " + (i + 1));
-                windowItem.addActionListener(e -> {
+                windowItem.addActionListener(_ -> {
                     try {
                         window.setSelected(true);
                         window.toFront();
@@ -213,7 +210,7 @@ public class MenuBarFactory {
     }
 
     private void onNew(ActionEvent e) {
-        GameWindow newWindow = WindowFactory.createNewGameWindow();
+        GameWindow newWindow = WindowFactory.createGameWindow();
         parentFrame.addWindow(newWindow);
         allGameWindows.add(newWindow);
 
@@ -227,6 +224,17 @@ public class MenuBarFactory {
         );
     }
 
+    private JMenu createRaceMenu() {
+        JMenu menu = new JMenu("Гонка");
+        menu.setMnemonic(KeyEvent.VK_G);
+
+        JMenuItem raceItem = new JMenuItem("Начать гонку");
+        raceItem.addActionListener(_ -> parentFrame.startRaceSetup());
+        menu.add(raceItem);
+
+        return menu;
+    }
+
     private void updateUILanguage() {
         parentFrame.setJMenuBar(createMenuBar());
         parentFrame.revalidate();
@@ -235,9 +243,7 @@ public class MenuBarFactory {
 
     private void updateColors() {
         for (GameWindow window : allGameWindows) {
-            if (window != null && window.getVisualizer() != null) {
-                window.getVisualizer().repaint();
-            }
+            window.repaint();
         }
     }
 

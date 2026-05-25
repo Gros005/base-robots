@@ -6,16 +6,15 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CoordinateWindow extends JInternalFrame implements RobotMovementListener {
-    private final Robot robot;
+    private Robot robot;
     private final JLabel xLabel;
     private final JLabel yLabel;
     private final JLabel angleLabel;
     private final JLabel targetLabel;
     private final JLabel statusLabel;
 
-    public CoordinateWindow(Robot robot) {
+    public CoordinateWindow() {
         super("Координаты робота", true, true, true, true);
-        this.robot = robot;
 
         setSize(280, 180);
         setLocation(400, 500);
@@ -40,16 +39,21 @@ public class CoordinateWindow extends JInternalFrame implements RobotMovementLis
         add(new JLabel("Статус:"));
         statusLabel = new JLabel("Движется");
         add(statusLabel);
+    }
 
+    public void setRobot(Robot robot) {
+        this.robot = robot;
         updateCoordinates();
     }
 
-    @Override
-    public void onRobotMoved(Robot robot) {
-        SwingUtilities.invokeLater(this::updateCoordinates);
+    public void updateCoordinates(Robot robot) {
+        this.robot = robot;
+        updateCoordinates();
     }
 
-    private void updateCoordinates() {
+    public void updateCoordinates() {
+        if (robot == null) return;
+
         xLabel.setText(String.format("%.1f", robot.getPositionX()));
         yLabel.setText(String.format("%.1f", robot.getPositionY()));
 
@@ -60,5 +64,10 @@ public class CoordinateWindow extends JInternalFrame implements RobotMovementLis
         targetLabel.setText(String.format("(%d, %d)", target.x, target.y));
 
         statusLabel.setText(robot.isStopped() ? "У цели" : "Движется");
+    }
+
+    @Override
+    public void onRobotMoved(Robot robot) {
+        SwingUtilities.invokeLater(this::updateCoordinates);
     }
 }

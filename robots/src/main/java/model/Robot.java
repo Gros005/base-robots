@@ -3,7 +3,7 @@ package model;
 import java.awt.Point;
 
 /**
- * Модель робота.
+ * Модель робота с оригинальной физикой движения по дуге.
  */
 public class Robot {
 
@@ -13,8 +13,11 @@ public class Robot {
     private static final int DEFAULT_TARGET_Y = 100;
 
     private static final double MAX_VELOCITY = 0.1;
-    private static final double MAX_ANGULAR_VELOCITY = 0.001;
-    private static final double STOP_DISTANCE = 0.5;
+    private static final double MAX_ANGULAR_VELOCITY = 0.003;
+    private static final double STOP_DISTANCE = 2.0;  // Увеличен порог
+
+    // Таймстеп движения (10 мс)
+    private static final double DT = 10;
 
     private static final int MARGIN = 20;
 
@@ -42,11 +45,7 @@ public class Robot {
         this.stopped = false;
     }
 
-    /**
-     * Обновляет границы в соответствии с размером поля
-     */
     public void updateBounds(int fieldWidth, int fieldHeight) {
-        // Защита от некорректных размеров
         if (fieldWidth <= MARGIN * 2 || fieldHeight <= MARGIN * 2) {
             return;
         }
@@ -55,7 +54,6 @@ public class Robot {
         this.minY = MARGIN;
         this.maxY = fieldHeight - MARGIN;
 
-        // Корректируем текущую позицию
         x = clamp(x, minX, maxX);
         y = clamp(y, minY, maxY);
 
@@ -64,11 +62,8 @@ public class Robot {
         target = new Point(tx, ty);
     }
 
-    /**
-     * Один шаг движения
-     */
     public boolean moveOneStep() {
-        if (stopped) {return false; }
+        if (stopped) return false;
 
         double distance = getDistanceToTarget();
 
@@ -79,42 +74,51 @@ public class Robot {
             return true;
         }
 
-        // Вычисляем угол до цели
         double angleToTarget = getAngleToTarget();
         double angleDiff = angleToTarget - direction;
 
-        // Нормализуем угол
         while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
         while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
-        // Определяем угловую скорость
-        double angularVelocity = 0;
-        if (angleDiff > 0) {
-            angularVelocity = MAX_ANGULAR_VELOCITY;
-        } else if (angleDiff < 0) {
-            angularVelocity = -MAX_ANGULAR_VELOCITY;
+        double maxTurn = MAX_ANGULAR_VELOCITY * DT;
+
+        if (Math.abs(angleDiff) < maxTurn) {
+            direction = angleToTarget;
+        } else if (angleDiff > 0) {
+            direction += maxTurn;
+        } else {
+            direction -= maxTurn;
         }
 
-        double velocity = MAX_VELOCITY;
-
-        double newX = x + velocity / angularVelocity *
-                (Math.sin(direction + angularVelocity * 10) - Math.sin(direction));
-        if (!Double.isFinite(newX)) {
-            newX = x + velocity * 10 * Math.cos(direction);
-        }
-
-        double newY = y - velocity / angularVelocity *
-                (Math.cos(direction + angularVelocity * 10) - Math.cos(direction));
-        if (!Double.isFinite(newY)) {
-            newY = y + velocity * 10 * Math.sin(direction);
-        }
-
-        direction += angularVelocity * 10;
         while (direction < 0) direction += 2 * Math.PI;
         while (direction >= 2 * Math.PI) direction -= 2 * Math.PI;
 
+        double velocity = MAX_VELOCITY;
+        if (distance < 50) {
+            velocity = MAX_VELOCITY * (distance / 50);
+            if (velocity < 0.3) velocity = 0.3;
+        }
+
+        double newX = x + velocity * DT * Math.cos(direction);
+        double newY = y + velocity * DT * Math.sin(direction);
+
+        double oldX = x, oldY = y;
         x = clamp(newX, minX, maxX);
         y = clamp(newY, minY, maxY);
+
+        if (Math.abs(x - oldX) < 0.1 && Math.abs(y - oldY) < 0.1) {
+            direction += Math.PI / 2;
+            while (direction < 0) direction += 2 * Math.PI;
+            while (direction >= 2 * Math.PI) direction -= 2 * Math.PI;
+        }
+
+        double newDistance = getDistanceToTarget();
+        if (newDistance > distance && distance < 15) {
+            x = target.x;
+            y = target.y;
+            stopped = true;
+            return true;
+        }
 
         return true;
     }
@@ -151,15 +155,19 @@ public class Robot {
         return Math.min(value, max);
     }
 
+    // Геттеры
     public double getX() { return x; }
     public double getY() { return y; }
     public double getDirection() { return direction; }
     public Point getTarget() { return new Point(target); }
     public boolean isStopped() { return stopped; }
 
-    // Совместимость с GameVisualizer
     public double getPositionX() { return x; }
     public double getPositionY() { return y; }
     public double getMaxVelocity() { return MAX_VELOCITY; }
     public double getMaxAngularVelocity() { return MAX_ANGULAR_VELOCITY; }
+
+    public void setStopped(boolean stopped) {
+        this.stopped = stopped;
+    }
 }

@@ -8,9 +8,6 @@ import config.ColorSettings;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Главное окно приложения координирует работу.
- */
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private GameWindow gameWindow;
@@ -29,9 +26,7 @@ public class MainApplicationFrame extends JFrame {
         setContentPane(desktopPane);
         createWindows();
 
-        // Регистрируем окна для сохранения состояния
         WindowState.getInstance().registerWindows(this, gameWindow, logWindow);
-
         WindowState.getInstance().load();
         ColorSettings.getInstance().load();
 
@@ -39,31 +34,24 @@ public class MainApplicationFrame extends JFrame {
         setupWindowClosing();
     }
 
-    /**
-     * Создает внутренние окна приложения
-     */
     private void createWindows() {
         gameWindow = WindowFactory.createGameWindow();
         addWindow(gameWindow);
 
         logWindow = WindowFactory.createLogWindow();
         addWindow(logWindow);
-        CoordinateWindow coordinateWindow = WindowFactory.createCoordinateWindow(gameWindow.getVisualizer().getRobot());
+
+        CoordinateWindow coordinateWindow = WindowFactory.createCoordinateWindow();
         addWindow(coordinateWindow);
-        gameWindow.getVisualizer().getMovementService().addListener(coordinateWindow);
+
+        gameWindow.getSinglePanel().setCoordinateWindow(coordinateWindow);
     }
 
-    /**
-     * Настраивает меню приложения
-     */
     private void setupMenu() {
         MenuBarFactory menuBarFactory = new MenuBarFactory(this, gameWindow);
         setJMenuBar(menuBarFactory.createMenuBar());
     }
 
-    /**
-     * Настраивает обработку закрытия окна
-     */
     private void setupWindowClosing() {
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -74,27 +62,11 @@ public class MainApplicationFrame extends JFrame {
         });
     }
 
-
-    /**
-     * Добавляет внутреннее окно
-     */
     public void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
-
-        // Если это игровое окно — обновляем границы робота
-        if (frame instanceof GameWindow) {
-            GameWindow game_wind = (GameWindow) frame;
-            GameVisualizer visualizer = game_wind.getVisualizer();
-            if (visualizer != null) {
-                SwingUtilities.invokeLater(visualizer::updateRobotBounds);
-            }
-        }
     }
 
-    /**
-     * Обработка выхода из приложения
-     */
     private void exitApplication() {
         String[] buttons = {
                 Language.get("dialog.exit.yes"),
@@ -113,12 +85,11 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == YES_BUTTON_INDEX) {
-            // Сохраняем состояние окон и цветов
             WindowState.getInstance().save();
             ColorSettings.getInstance().save();
 
-            if (gameWindow != null && gameWindow.getVisualizer() != null) {
-                gameWindow.getVisualizer().shutdown();
+            if (gameWindow != null) {
+                gameWindow.shutdown();
             }
 
             log.Logger.debug(Language.get("log.appClosing"));
@@ -128,10 +99,13 @@ public class MainApplicationFrame extends JFrame {
         }
     }
 
-    /**
-     * Для доступа из MenuBarFactory
-     */
     public JDesktopPane getDesktopPane() {
         return desktopPane;
+    }
+
+    public void startRaceSetup() {
+        int robotCount = RaceSetupDialog.showRobotCountDialog(this);
+        RaceSetupDialog.PlacementMode mode = RaceSetupDialog.showPlacementModeDialog(this);
+        gameWindow.switchToRaceMode(robotCount, mode);
     }
 }

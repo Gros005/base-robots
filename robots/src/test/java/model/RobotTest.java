@@ -1,7 +1,7 @@
 package model;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.awt.Point;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,108 +11,89 @@ public class RobotTest {
 
     @BeforeEach
     public void setUp() {
-
         robot = new Robot();
         robot.updateBounds(800, 600);
     }
 
     @Test
     public void testDefaultConstructor() {
-        assertEquals(100.0, robot.getPositionX(), 0.001);
-        assertEquals(100.0, robot.getPositionY(), 0.001);
+        assertEquals(100.0, robot.getX(), 0.001);
+        assertEquals(100.0, robot.getY(), 0.001);
         assertEquals(0.0, robot.getDirection(), 0.001);
-
-        Point target = robot.getTarget();
-        assertEquals(150, target.x);
-        assertEquals(100, target.y);
+        assertFalse(robot.isStopped());
     }
 
     @Test
     public void testSetTarget() {
-        // Создаём нового робота для чистоты теста
-        Robot testRobot = new Robot();
+        Point target = new Point(500, 400);
+        robot.setTarget(target);
 
-        // Цель в пределах границ
-        Point validTarget = new Point(700, 500);
-        testRobot.setTarget(validTarget);
-
-        Point target = testRobot.getTarget();
-        assertEquals(700, target.x, "X should be 700");
-        assertEquals(500, target.y, "Y should be 500");
-        assertFalse(testRobot.isStopped());
-
-        // Цель за пределами границ X
-        Point outOfBoundsX = new Point(800, 400);
-        testRobot.setTarget(outOfBoundsX);
-
-        Point clampedTargetX = testRobot.getTarget();
-        assertEquals(780, clampedTargetX.x, "X should be clamped to 780");
-        assertEquals(400, clampedTargetX.y);
-
-        // Цель за пределами границ Y
-        Point outOfBoundsY = new Point(500, 600);
-        testRobot.setTarget(outOfBoundsY);
-
-        Point clampedTargetY = testRobot.getTarget();
-        assertEquals(500, clampedTargetY.x);
-        assertEquals(580, clampedTargetY.y, "Y should be clamped to 580");
-
-        // Цель за пределами обеих границ
-        Point outOfBoundsBoth = new Point(900, 900);
-        testRobot.setTarget(outOfBoundsBoth);
-
-        Point clampedTargetBoth = testRobot.getTarget();
-        assertEquals(780, clampedTargetBoth.x, "X should be clamped to 780");
-        assertEquals(580, clampedTargetBoth.y, "Y should be clamped to 580");
+        Point result = robot.getTarget();
+        assertEquals(500, result.x);
+        assertEquals(400, result.y);
+        assertFalse(robot.isStopped());
     }
 
     @Test
     public void testUpdateBounds() {
-        // Проверяем, что границы обновляются корректно
-        robot.updateBounds(1000, 800);
+        robot.updateBounds(1024, 768);
 
-        // Робот не должен выйти за новые границы
-        robot.setTarget(new Point(900, 700));
+        robot.setTarget(new Point(2000, 2000));
         Point target = robot.getTarget();
-        assertTrue(target.x <= 980);  // maxX = 1000 - 20 = 980
-        assertTrue(target.y <= 780);  // maxY = 800 - 20 = 780
-    }
-
-    @Test
-    public void testReset() {
-        // Сначала изменим позицию
-        robot.setTarget(new Point(500, 500));
-        robot.moveOneStep();
-
-        // Запоминаем, что позиция изменилась
-        assertNotEquals(100.0, robot.getPositionX());
-
-        // Сбрасываем
-        robot.reset();
-
-        assertEquals(100.0, robot.getPositionX(), 0.001);
-        assertEquals(100.0, robot.getPositionY(), 0.001);
-        assertEquals(0.0, robot.getDirection(), 0.001);
-
-        Point target = robot.getTarget();
-        assertEquals(150, target.x);
-        assertEquals(100, target.y);
+        assertTrue(target.x <= 1004);
+        assertTrue(target.y <= 748);
     }
 
     @Test
     public void testMoveOneStep() {
         robot.setTarget(new Point(200, 100));
-        double startX = robot.getPositionX();
-        double startY = robot.getPositionY();
+        double oldX = robot.getX();
+        double oldY = robot.getY();
+
+        boolean moved = robot.moveOneStep();
+
+        assertTrue(moved);
+        assertTrue(robot.getX() != oldX || robot.getY() != oldY);
+    }
+
+    @Test
+    public void testStopsAtTarget() {
+        robot.reset();
+        robot.updateBounds(800, 600);
+
+        double startX = robot.getX();
+        double startY = robot.getY();
+        robot.setTarget(new Point((int) startX, (int) startY));
+
         boolean moved = false;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             if (robot.moveOneStep()) {
                 moved = true;
             }
         }
-        // Проверяем, что позиция изменилась
-        assertTrue(moved || (robot.getPositionX() != startX || robot.getPositionY() != startY),
-                "Robot should move towards target");
+        assertTrue(Math.abs(robot.getX() - startX) < 0.1, "Робот не должен значительно двигаться");
+        assertTrue(Math.abs(robot.getY() - startY) < 0.1, "Робот не должен значительно двигаться");
+        assertTrue(robot.isStopped(), "Робот должен быть остановлен");
+    }
+
+    @Test
+    public void testReset() {
+        robot.setTarget(new Point(500, 400));
+
+        assertEquals(500, robot.getTarget().x);
+        assertEquals(400, robot.getTarget().y);
+
+        robot.reset();
+        robot.updateBounds(800, 600);
+        assertEquals(100.0, robot.getX(), 0.001);
+        assertEquals(100.0, robot.getY(), 0.001);
+        assertEquals(0.0, robot.getDirection(), 0.001);
+        assertFalse(robot.isStopped());
+
+        Point target = robot.getTarget();
+        System.out.println("Target after reset: (" + target.x + ", " + target.y + ")");
+        assertEquals(150, target.x, "Цель по X должна быть 150");
+        assertEquals(100, target.y, "Цель по Y должна быть 100");
     }
 
     @Test
@@ -140,8 +121,32 @@ public class RobotTest {
     }
 
     @Test
-    public void testGetters() {
-        assertTrue(robot.getMaxVelocity() > 0);
-        assertTrue(robot.getMaxAngularVelocity() > 0);
+    public void testClampToBounds() {
+        robot.updateBounds(800, 600);
+
+        robot.setTarget(new Point(900, 300));
+        Point target = robot.getTarget();
+        assertEquals(780, target.x);
+
+        robot.setTarget(new Point(-50, 300));
+        target = robot.getTarget();
+        assertEquals(20, target.x);
+
+        robot.setTarget(new Point(400, 700));
+        target = robot.getTarget();
+        assertEquals(580, target.y);
+
+        robot.setTarget(new Point(400, -50));
+        target = robot.getTarget();
+        assertEquals(20, target.y);
+    }
+
+    @Test
+    public void testSetStopped() {
+        robot.setStopped(true);
+        assertTrue(robot.isStopped());
+
+        boolean moved = robot.moveOneStep();
+        assertFalse(moved);
     }
 }

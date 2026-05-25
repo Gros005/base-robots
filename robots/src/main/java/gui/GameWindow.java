@@ -1,33 +1,52 @@
 package gui;
 
-import java.awt.BorderLayout;
-import javax.swing.JInternalFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
 
 /**
- * Окно с игровым полем контейнер для GameVisualizer.
+ * Окно с игровым полем.
  */
 public class GameWindow extends JInternalFrame {
-    private final GameVisualizer m_visualizer;
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel mainPanel = new JPanel(cardLayout);
 
-    /**
-     * @param visualizer визуализатор для отображения
-     */
-    public GameWindow(GameVisualizer visualizer) {
+    private final SingleRobotPanel singlePanel;
+    private final RacePanel racePanel;
+
+    public GameWindow() {
         super("Игровое поле", true, true, true, true);
-        this.m_visualizer = visualizer;
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_visualizer, BorderLayout.CENTER);
-        getContentPane().add(panel);
+        singlePanel = new SingleRobotPanel();
+        racePanel = new RacePanel();
 
-        pack();
+        mainPanel.add(singlePanel, "SINGLE");
+        mainPanel.add(racePanel, "RACE");
+
+        getContentPane().add(mainPanel);
+        setSize(400, 400);
     }
 
-    /**
-     * Визуализатор для доступа из других классов
-     */
-    public GameVisualizer getVisualizer() {
-        return m_visualizer;
+    public void switchToSingleMode() {
+        cardLayout.show(mainPanel, "SINGLE");
+        setTitle("Игровое поле (обычный режим)");
+    }
+
+    public void switchToRaceMode(int robotCount, RaceSetupDialog.PlacementMode mode) {
+        racePanel.setupRace(robotCount, mode);
+        cardLayout.show(mainPanel, "RACE");
+        setTitle("Игровое поле (гонка)");
+    }
+
+    public SingleRobotPanel getSinglePanel() {
+        return singlePanel;
+    }
+
+    public void resetRobot() {
+        singlePanel.resetRobot();
+    }
+
+    public void shutdown() {
+        singlePanel.shutdown();
+        racePanel.shutdown();
     }
 }

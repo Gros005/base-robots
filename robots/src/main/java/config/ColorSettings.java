@@ -1,7 +1,8 @@
 package config;
 
 import java.awt.Color;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Управляет цветами приложения (робот, цель, след).
@@ -19,6 +20,9 @@ public class ColorSettings implements Saveable {
         BLUE(Color.BLUE, "blue"),
         GREEN(Color.GREEN, "green"),
         YELLOW(Color.YELLOW, "yellow"),
+        ORANGE(Color.ORANGE, "orange"),
+        CYAN(Color.CYAN, "cyan"),
+        PINK(Color.PINK, "pink"),
         PURPLE(Color.MAGENTA, "purple"),
         GRAY(Color.GRAY, "gray");
 
@@ -71,6 +75,34 @@ public class ColorSettings implements Saveable {
 
     public Color getTrailColor() {
         return trailColor;
+    }
+
+    public static List<Color> getRobotColors() {
+        return Arrays.stream(ColorPreset.values())
+                .filter(preset -> preset != ColorPreset.GRAY)
+                .map(preset -> preset.color)
+                .collect(Collectors.toList());
+    }
+
+    public static int getMaxRobotsCount() {
+        return ColorPreset.values().length - 1;
+    }
+
+    public static Color getRobotColorByIndex(int index) {
+        List<Color> colors = getRobotColors();
+        return colors.get(index % colors.size());
+    }
+
+    public static String getColorNameByColor(Color c) {
+        if (c.equals(Color.RED)) return "Красный";
+        if (c.equals(Color.BLUE)) return "Синий";
+        if (c.equals(Color.GREEN)) return "Зелёный";
+        if (c.equals(Color.YELLOW)) return "Жёлтый";
+        if (c.equals(Color.ORANGE)) return "Оранжевый";
+        if (c.equals(Color.CYAN)) return "Голубой";
+        if (c.equals(Color.PINK)) return "Розовый";
+        if (c.equals(Color.MAGENTA)) return "Фиолетовый";
+        return "Неизвестный";
     }
 
     @Override
