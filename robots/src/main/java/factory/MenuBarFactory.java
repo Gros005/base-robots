@@ -3,6 +3,7 @@ package factory;
 import gui.GameWindow;
 import gui.Language;
 import gui.MainApplicationFrame;
+import gui.MazeGameWindow;
 import log.Logger;
 import config.ColorSettings;
 
@@ -39,6 +40,7 @@ public class MenuBarFactory {
         menuBar.add(createTestsMenu());
         menuBar.add(createWindowsMenu());
         menuBar.add(createRaceMenu());
+        menuBar.add(createMazeMenu());
 
         return menuBar;
     }
@@ -233,6 +235,23 @@ public class MenuBarFactory {
         menu.add(raceItem);
 
         return menu;
+    }
+
+    private JMenu createMazeMenu() {
+        JMenu menu = new JMenu("Лабиринт");
+        menu.setMnemonic(KeyEvent.VK_M);
+
+        JMenuItem startMazeItem = new JMenuItem("Начать игру в лабиринте");
+        startMazeItem.addActionListener(e -> startMazeGame());
+        menu.add(startMazeItem);
+
+        return menu;
+    }
+
+    private void startMazeGame() {
+        MazeGameWindow mazeWindow = new MazeGameWindow();
+        parentFrame.addWindow(mazeWindow);
+        mazeWindow.setVisible(true);
     }
 
     private void updateUILanguage() {
