@@ -15,6 +15,9 @@ public class ColorSettings implements Saveable {
     private Color targetColor = Color.GREEN;
     private Color trailColor = new Color(100, 100, 100, 100);
 
+    private Color player1Color = Color.RED;
+    private Color player2Color = Color.BLUE;
+
     public enum ColorPreset {
         RED(Color.RED, "red"),
         BLUE(Color.BLUE, "blue"),
@@ -175,5 +178,23 @@ public class ColorSettings implements Saveable {
             }
         }
         return "purple";
+    }
+
+    public void setPlayer1Color(ColorPreset preset) {
+        this.player1Color = preset.color;
+        save();
+    }
+
+    public Color getPlayer1Color() {
+        return player1Color;
+    }
+
+    public void setPlayer2Color(ColorPreset preset) {
+        this.player2Color = preset.color;
+        save();
+    }
+
+    public Color getPlayer2Color() {
+        return player2Color;
     }
 }
